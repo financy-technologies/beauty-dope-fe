@@ -34,6 +34,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.svg" alt="DupeFinder logo" className="h-8 w-8" />
           <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
             Dupe<span className="text-gold">Finder</span>
           </span>
