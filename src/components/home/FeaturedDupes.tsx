@@ -76,6 +76,8 @@ const FeaturedDupes = () => {
                   similarityScore={dupe.similarityScore}
                   category={dupe.category}
                   savingsPercent={dupe.savingsPercent}
+                  dupeLabel={(dupe as any).dupeLabel}
+                  sharedActives={(dupe as any).sharedActives ?? []}
                 />
               </motion.div>
             ))
