@@ -19,8 +19,8 @@ const Hero = () => {
     <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32">
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-gold/5 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-rose/5 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
       </div>
 
       <div className="container relative px-4 md:px-6">
@@ -35,10 +35,10 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1, duration: 0.4 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
-            <span className="text-sm font-medium text-gold-dark">Discover affordable alternatives</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-sm font-medium text-gold-dark">Ingredient science, not brand loyalty</span>
           </motion.div>
 
           {/* Headline */}
@@ -49,8 +49,8 @@ const Hero = () => {
 
           {/* Subheadline */}
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-            Discover affordable alternatives to luxury skincare and makeup products. 
-            Same quality, smarter price.
+            Discover affordable alternatives to luxury skincare products.
+            Ingredient-matched dupes, verified by science.
           </p>
 
           {/* Search Bar */}
@@ -92,7 +92,7 @@ const Hero = () => {
               <button
                 key={brand}
                 onClick={() => setSearchQuery(brand)}
-                className="text-sm text-foreground/80 hover:text-gold transition-colors underline underline-offset-4 decoration-gold/30 hover:decoration-gold"
+                className="text-sm text-foreground/80 hover:text-primary transition-colors underline underline-offset-4 decoration-primary/30 hover:decoration-primary"
               >
                 {brand}
               </button>

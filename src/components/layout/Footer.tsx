@@ -32,7 +32,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
               <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
-                Dupe<span className="text-gold">Finder</span>
+                Duplo<span className="text-primary">Skin</span>
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} DupeFinder. All rights reserved.
+            © {currentYear} DuploSkin. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Made with ♡ for beauty lovers everywhere

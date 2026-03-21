@@ -44,7 +44,7 @@ const Auth = () => {
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-card">
         <div className="mb-8 text-center">
           <Link to="/" className="font-display text-2xl font-semibold tracking-tight">
-            Dupe<span className="text-gold">Finder</span>
+            Duplo<span className="text-primary">Skin</span>
           </Link>
           <h1 className="mt-4 text-xl font-semibold text-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
@@ -104,7 +104,7 @@ const Auth = () => {
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <Link
             to={isLogin ? "/signup" : "/login"}
-            className="font-medium text-gold hover:text-gold-dark"
+            className="font-medium text-primary hover:text-gold-dark"
           >
             {isLogin ? "Sign up" : "Sign in"}
           </Link>

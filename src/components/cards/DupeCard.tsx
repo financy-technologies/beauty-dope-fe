@@ -32,9 +32,9 @@ function formatPrice(product: Product): string {
 }
 
 const LABEL_STYLES: Record<string, string> = {
-  'exact-match': 'bg-emerald-500/90 text-white',
-  'close-dupe':  'bg-gold text-accent-foreground',
-  'inspired-by': 'bg-sage/90 text-white',
+  'exact-match': 'bg-primary text-white',
+  'close-dupe':  'bg-accent text-white',
+  'inspired-by': 'bg-secondary text-secondary-foreground',
 };
 
 const LABEL_TEXT: Record<string, string> = {
@@ -74,7 +74,7 @@ const DupeCard = ({
     }
   };
 
-  const labelStyle = dupeLabel ? (LABEL_STYLES[dupeLabel] ?? 'bg-gold text-accent-foreground') : 'bg-gold text-accent-foreground';
+  const labelStyle = dupeLabel ? (LABEL_STYLES[dupeLabel] ?? 'bg-primary text-white') : 'bg-primary text-white';
   const labelText  = dupeLabel ? (LABEL_TEXT[dupeLabel] ?? dupeLabel) : `${similarityScore}% Match`;
 
   return (
@@ -106,7 +106,7 @@ const DupeCard = ({
         {/* Center arrow */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-lg">
-            <ArrowRight className="h-4 w-4 text-gold" />
+            <ArrowRight className="h-4 w-4 text-primary" />
           </div>
         </div>
 
@@ -115,7 +115,7 @@ const DupeCard = ({
           <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm", labelStyle)}>
             {labelText}
           </span>
-          <span className="rounded-full bg-sage/90 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+          <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-white shadow-sm">
             Save {savingsPercent}%
           </span>
         </div>
@@ -153,7 +153,7 @@ const DupeCard = ({
         {/* Divider */}
         <div className="my-3 flex items-center gap-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-gold font-medium">DUPE</span>
+          <span className="text-xs text-primary font-medium">DUPE</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
@@ -163,7 +163,7 @@ const DupeCard = ({
             <p className="text-xs text-muted-foreground">{dupe.brand}</p>
             <p className="truncate text-sm font-medium text-foreground">{dupe.name}</p>
           </div>
-          <span className="shrink-0 text-sm font-bold text-gold">
+          <span className="shrink-0 text-sm font-bold text-primary">
             {formatPrice(dupe)}
           </span>
         </div>
@@ -172,7 +172,7 @@ const DupeCard = ({
         {sharedActives.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {sharedActives.slice(0, 3).map((a) => (
-              <span key={a} className="rounded-full border border-sage/20 bg-sage/10 px-2 py-0.5 text-[10px] font-medium capitalize text-sage-dark">
+              <span key={a} className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
                 {a.replace(/-/g, ' ')}
               </span>
             ))}

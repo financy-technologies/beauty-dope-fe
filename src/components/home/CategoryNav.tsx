@@ -81,7 +81,7 @@ const CategoryNav = () => {
                     </div>
 
                     {/* Arrow indicator */}
-                    <div className="mt-4 flex items-center gap-2 text-gold-light opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <div className="mt-4 flex items-center gap-2 text-secondary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                       <span className="text-sm font-medium">Explore</span>
                       <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

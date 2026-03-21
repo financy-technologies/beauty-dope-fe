@@ -26,7 +26,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           <Star
             className={cn(
               "h-6 w-6 transition-colors",
-              star <= value ? "fill-gold text-gold" : "text-muted-foreground"
+              star <= value ? "fill-primary text-primary" : "text-muted-foreground"
             )}
           />
         </button>
@@ -82,7 +82,7 @@ const ReviewSection = ({ dupeId }: Props) => {
             <p className="text-sm font-medium mb-1">Your review</p>
             <div className="flex gap-1 mb-2">
               {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} className={cn("h-4 w-4", s <= myReview.rating ? "fill-gold text-gold" : "text-muted-foreground")} />
+                <Star key={s} className={cn("h-4 w-4", s <= myReview.rating ? "fill-primary text-primary" : "text-muted-foreground")} />
               ))}
             </div>
             {myReview.comment && <p className="text-sm text-muted-foreground">{myReview.comment}</p>}
@@ -139,7 +139,7 @@ const ReviewSection = ({ dupeId }: Props) => {
                   </p>
                   <div className="flex gap-0.5 mt-0.5">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className={cn("h-3.5 w-3.5", s <= review.rating ? "fill-gold text-gold" : "text-muted-foreground")} />
+                      <Star key={s} className={cn("h-3.5 w-3.5", s <= review.rating ? "fill-primary text-primary" : "text-muted-foreground")} />
                     ))}
                   </div>
                 </div>

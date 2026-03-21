@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "dupefinder-6c12a"
+  },
+  "targets": {
+    "dupefinder-6c12a": {
+      "hosting": {
+        "beautydope": ["beautydope"]
+      }
+    }
   }
 }

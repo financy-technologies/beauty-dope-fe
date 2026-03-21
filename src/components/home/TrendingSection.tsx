@@ -18,7 +18,7 @@ const TrendingSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <div className="mb-6 flex items-center gap-2 text-gold">
+            <div className="mb-6 flex items-center gap-2 text-primary">
               <TrendingUp className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wider">Trending Now</span>
             </div>
@@ -54,7 +54,7 @@ const TrendingSection = () => {
                   >
                     <Link
                       to={`/dupe/${item.id}`}
-                      className="group flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-gold/30 hover:shadow-soft"
+                      className="group flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-primary/30 hover:shadow-soft"
                     >
                       {/* Rank */}
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted font-display text-lg font-semibold text-foreground">
@@ -73,7 +73,7 @@ const TrendingSection = () => {
 
                       {/* Stats */}
                       <div className="hidden sm:flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-gold">
+                        <div className="flex items-center gap-1 text-primary">
                           <Star className="h-4 w-4 fill-current" />
                           <span>{item.rating}</span>
                         </div>
@@ -85,7 +85,7 @@ const TrendingSection = () => {
 
                       {/* Savings */}
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-bold text-sage">Save {item.savings}</p>
+                        <p className="text-sm font-bold text-accent">Save {item.savings}</p>
                       </div>
                     </Link>
                   </motion.div>
@@ -110,7 +110,7 @@ const TrendingSection = () => {
                   <p className="mt-1 text-sm text-muted-foreground">Verified Dupes</p>
                 </div>
                 <div className="text-center">
-                  <p className="font-display text-4xl font-semibold text-foreground md:text-5xl">$84</p>
+                  <p className="font-display text-4xl font-semibold text-foreground md:text-5xl">₹4k+</p>
                   <p className="mt-1 text-sm text-muted-foreground">Avg. Savings</p>
                 </div>
                 <div className="text-center">

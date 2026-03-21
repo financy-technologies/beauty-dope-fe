@@ -8,9 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const LABEL_STYLES: Record<string, string> = {
-  'exact-match': 'bg-emerald-500 text-white',
-  'close-dupe':  'bg-amber-400 text-black',
-  'inspired-by': 'bg-sage text-white',
+  'exact-match': 'bg-primary text-white',
+  'close-dupe':  'bg-accent text-white',
+  'inspired-by': 'bg-secondary text-secondary-foreground',
 };
 
 const LABEL_TEXT: Record<string, string> = {
@@ -61,12 +61,12 @@ const DupeDetail = () => {
                   {dupe.category}
                 </span>
                 {dupe.dupeLabel && (
-                  <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", LABEL_STYLES[dupe.dupeLabel] ?? 'bg-gold text-black')}>
+                  <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", LABEL_STYLES[dupe.dupeLabel] ?? 'bg-primary text-white')}>
                     {LABEL_TEXT[dupe.dupeLabel] ?? dupe.dupeLabel}
                   </span>
                 )}
                 {dupe.dupeRank === 1 && (
-                  <span className="rounded-full bg-gold/20 border border-gold/30 px-3 py-1 text-xs font-medium text-gold-dark">
+                  <span className="rounded-full bg-primary/10 border border-primary/30 px-3 py-1 text-xs font-medium text-gold-dark">
                     #1 Best Dupe
                   </span>
                 )}
@@ -78,7 +78,7 @@ const DupeDetail = () => {
 
               <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <Star className="h-4 w-4 fill-gold text-gold" />
+                  <Star className="h-4 w-4 fill-primary text-primary" />
                   {Number(dupe.avgRating).toFixed(1)} rating
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -86,11 +86,11 @@ const DupeDetail = () => {
                   {dupe.totalVotes.toLocaleString()} votes
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <TrendingUp className="h-4 w-4 text-sage" />
+                  <TrendingUp className="h-4 w-4 text-accent" />
                   Save {dupe.savingsPercent}%
                 </span>
                 {dupe.priceRatio && (
-                  <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                  <span className="flex items-center gap-1.5 text-accent font-medium">
                     <Zap className="h-4 w-4" />
                     {Number(dupe.priceRatio).toFixed(1)}× cheaper
                   </span>
@@ -100,16 +100,16 @@ const DupeDetail = () => {
 
             {/* ── Shared Key Actives ──────────────────────────────────── */}
             {dupe.sharedActives?.length > 0 && (
-              <div className="rounded-xl border border-sage/20 bg-sage/5 p-5">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-sage" />
+                  <Zap className="h-4 w-4 text-primary" />
                   Shared Key Actives
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {dupe.sharedActives.map((active) => (
                     <span
                       key={active}
-                      className="rounded-full border border-sage/30 bg-white px-3 py-1 text-xs font-medium capitalize text-sage-dark shadow-sm"
+                      className="rounded-full border border-primary/30 bg-white px-3 py-1 text-xs font-medium capitalize text-primary shadow-sm"
                     >
                       {active.replace(/-/g, ' ')}
                     </span>
@@ -152,14 +152,14 @@ const DupeDetail = () => {
               </div>
 
               {/* Dupe */}
-              <div className="rounded-2xl border-2 border-gold/40 bg-card overflow-hidden relative flex flex-col">
+              <div className="rounded-2xl border-2 border-primary/40 bg-card overflow-hidden relative flex flex-col">
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                   {dupe.dupeLabel && (
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm", LABEL_STYLES[dupe.dupeLabel] ?? 'bg-gold text-black')}>
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm", LABEL_STYLES[dupe.dupeLabel] ?? 'bg-primary text-white')}>
                       {LABEL_TEXT[dupe.dupeLabel] ?? dupe.dupeLabel}
                     </span>
                   )}
-                  <span className="rounded-full bg-sage/90 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+                  <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-white shadow-sm">
                     Save {dupe.savingsPercent}%
                   </span>
                 </div>
@@ -170,7 +170,7 @@ const DupeDetail = () => {
                   <p className="text-xs text-muted-foreground mb-1">Dupe Pick</p>
                   <p className="text-sm text-muted-foreground">{dupe.dupe.brand}</p>
                   <h2 className="font-semibold text-foreground mt-0.5 flex-1">{dupe.dupe.name}</h2>
-                  <p className="mt-2 text-xl font-bold text-gold">
+                  <p className="mt-2 text-xl font-bold text-primary">
                     {formatPrice(dupe.dupe.price, dupe.dupe.currency, dupe.dupe.normalizedPriceInr)}
                   </p>
                   {dupe.dupe.sourceUrl && (
@@ -179,7 +179,7 @@ const DupeDetail = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-gold-dark hover:bg-gold/20 transition-colors"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 text-xs font-medium text-gold-dark hover:bg-primary/20 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
                       Buy on {dupe.dupe.platform ?? 'store'}

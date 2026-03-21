@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "target": "beautydope",
     "public": "dist",
     "ignore": [
       "firebase.json",
