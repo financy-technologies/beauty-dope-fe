@@ -1,105 +1,149 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Sparkles, ShieldCheck, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const TRUST_PILLS = [
+  { icon: ShieldCheck, label: "Ingredient-verified" },
+  { icon: Zap,         label: "2,500+ dupes" },
+  { icon: Sparkles,    label: "AI-matched" },
+];
+
+const POPULAR = ["Charlotte Tilbury", "Drunk Elephant", "La Mer", "Tom Ford", "Tatcha"];
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      // Navigate to browse with search query
-      window.location.href = `/browse?q=${encodeURIComponent(searchQuery)}`;
-    }
+    if (searchQuery.trim()) navigate(`/browse?q=${encodeURIComponent(searchQuery)}`);
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32">
-      {/* Decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-hero">
+      {/* Background decoration */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-accent/5 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/30 blur-3xl" />
       </div>
 
-      <div className="container relative px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-3xl text-center"
-        >
-          {/* Badge */}
+      <div className="container relative px-4 py-24 md:py-36 md:px-6">
+        <div className="mx-auto max-w-4xl text-center">
+
+          {/* Eyebrow */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-4 py-1.5"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm font-medium text-gold-dark">Ingredient science, not brand loyalty</span>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+            <span className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+              Science-backed beauty dupes
+            </span>
           </motion.div>
 
           {/* Headline */}
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-            Find Your Perfect{" "}
-            <span className="text-gradient-gold">Dupe</span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-            Discover affordable alternatives to luxury skincare products.
-            Ingredient-matched dupes, verified by science.
-          </p>
-
-          {/* Search Bar */}
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display text-5xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl md:text-7xl lg:text-8xl"
+          >
+            Luxury Look.
+            <br />
+            <span className="text-gradient-teal italic">Half the Price.</span>
+          </motion.h1>
+
+          {/* Sub-headline */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground md:text-lg"
+          >
+            DuploSkin matches luxury skincare & makeup products with affordable dupes
+            using ingredient science — not guesswork.
+          </motion.p>
+
+          {/* Search */}
+          <motion.form
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             onSubmit={handleSearch}
-            className="mt-10 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto"
+            className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 sm:flex-row"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by product or brand..."
+                placeholder="Search a product or brand, e.g. La Mer..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 pl-12 pr-4 text-base shadow-soft border-border/50 bg-background/80 backdrop-blur"
+                className="h-14 rounded-xl border-border/60 bg-background/85 pl-12 pr-4 text-base shadow-card backdrop-blur-sm focus-visible:ring-primary"
               />
             </div>
             <Button
               type="submit"
               size="lg"
-              className="h-14 px-8 bg-primary hover:bg-primary/90 shadow-soft font-medium"
+              className="h-14 rounded-xl px-8 font-semibold shadow-gold tracking-wide"
             >
               Find Dupes
             </Button>
           </motion.form>
 
-          {/* Quick Categories */}
+          {/* Trust pills */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            className="mt-8 flex flex-wrap justify-center gap-3"
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="mt-6 flex flex-wrap items-center justify-center gap-3"
           >
-            <span className="text-sm text-muted-foreground">Popular:</span>
-            {["Charlotte Tilbury", "Drunk Elephant", "La Mer", "Tom Ford"].map((brand) => (
+            {TRUST_PILLS.map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground shadow-soft backdrop-blur-sm"
+              >
+                <Icon className="h-3.5 w-3.5 text-primary" />
+                {label}
+              </span>
+            ))}
+          </motion.div>
+
+          {/* Popular searches */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.55 }}
+            className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
+          >
+            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Popular
+            </span>
+            {POPULAR.map((brand) => (
               <button
                 key={brand}
-                onClick={() => setSearchQuery(brand)}
-                className="text-sm text-foreground/80 hover:text-primary transition-colors underline underline-offset-4 decoration-primary/30 hover:decoration-primary"
+                type="button"
+                onClick={() => {
+                  setSearchQuery(brand);
+                  navigate(`/browse?q=${encodeURIComponent(brand)}`);
+                }}
+                className="text-sm text-foreground/70 underline underline-offset-4 decoration-primary/30 transition-colors hover:text-primary hover:decoration-primary"
               >
                 {brand}
               </button>
             ))}
           </motion.div>
-        </motion.div>
+        </div>
       </div>
+
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/30 to-transparent" />
     </section>
   );
 };

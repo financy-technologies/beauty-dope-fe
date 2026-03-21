@@ -11,10 +11,10 @@ const Footer = () => {
       { name: "Trending", href: "/browse?sort=trending" },
     ],
     community: [
-      { name: "Submit a Dupe", href: "/submit" },
-      { name: "Leaderboard", href: "/leaderboard" },
-      { name: "Reviews", href: "/reviews" },
-      { name: "Blog", href: "/blog" },
+      { name: "Browse All Dupes", href: "/browse" },
+      { name: "Trending", href: "/browse?sort=trending" },
+      { name: "Top Rated", href: "/browse?sort=rating" },
+      { name: "Best Savings", href: "/browse?sort=savings" },
     ],
     company: [
       { name: "About Us", href: "/about" },
@@ -25,24 +25,24 @@ const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="container px-4 py-12 md:px-6 md:py-16">
+    <footer className="border-t border-border bg-espresso text-white/80">
+      <div className="container px-4 py-14 md:px-6 md:py-20">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
-              <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
-                Duplo<span className="text-primary">Skin</span>
+              <span className="font-display text-2xl font-semibold tracking-tight text-white">
+                Duplo<span className="text-gold-light">Skin</span>
               </span>
             </Link>
-            <p className="mt-4 max-w-sm text-sm text-muted-foreground">
+            <p className="mt-4 max-w-sm text-sm text-white/50">
               Discover affordable alternatives to luxury skincare and makeup products. 
               AI-powered ingredient matching, verified by our community.
             </p>
             <div className="mt-6 flex gap-4">
               <a
                 href="#"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-white/40 transition-colors hover:text-white"
                 aria-label="Instagram"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-white/40 transition-colors hover:text-white"
                 aria-label="TikTok"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-white/40 transition-colors hover:text-white"
                 aria-label="Twitter"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ const Footer = () => {
               </a>
               <a
                 href="#"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-white/40 transition-colors hover:text-white"
                 aria-label="YouTube"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@ const Footer = () => {
 
           {/* Links */}
           <div>
-            <h4 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
               Discover
             </h4>
             <ul className="space-y-3">
@@ -89,7 +89,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-white/50 transition-colors hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -99,7 +99,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
               Community
             </h4>
             <ul className="space-y-3">
@@ -107,7 +107,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-white/50 transition-colors hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -117,7 +117,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
               Company
             </h4>
             <ul className="space-y-3">
@@ -125,7 +125,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-white/50 transition-colors hover:text-white"
                   >
                     {link.name}
                   </Link>
@@ -136,11 +136,11 @@ const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
+          <p className="text-sm text-white/30">
             © {currentYear} DuploSkin. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/30">
             Made with ♡ for beauty lovers everywhere
           </p>
         </div>
