@@ -80,10 +80,10 @@ const DupeCard = ({
   return (
     <Link
       to={`/dupe/${id}`}
-      className="group block overflow-hidden rounded-xl bg-card shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1"
+      className="group block overflow-hidden rounded-2xl bg-card shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1"
     >
-      {/* Images */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      {/* Images — 4:3 on mobile, square on sm+ */}
+      <div className="relative aspect-[4/3] sm:aspect-square overflow-hidden bg-muted">
         <div className="absolute inset-0 flex">
           <div className="relative w-1/2 overflow-hidden">
             <img
@@ -105,17 +105,17 @@ const DupeCard = ({
 
         {/* Center arrow */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-lg">
-            <ArrowRight className="h-4 w-4 text-primary" />
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background shadow-lg ring-1 ring-border">
+            <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="absolute left-3 top-3 flex flex-col gap-1.5">
-          <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm", labelStyle)}>
+        {/* Badges — stacked, won't crowd on small screens */}
+        <div className="absolute left-2.5 top-2.5 sm:left-3 sm:top-3 flex flex-col gap-1.5 max-w-[calc(50%-2.25rem)]">
+          <span className={cn("rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold shadow-sm truncate", labelStyle)}>
             {labelText}
           </span>
-          <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+          <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] sm:text-xs font-medium text-white shadow-sm w-fit">
             Save {savingsPercent}%
           </span>
         </div>
@@ -124,53 +124,53 @@ const DupeCard = ({
         <button
           onClick={handleFavoriteClick}
           disabled={toggleFavorite.isPending}
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 shadow-sm transition-all hover:bg-background hover:shadow-md disabled:opacity-50"
+          className="absolute right-2.5 top-2.5 sm:right-3 sm:top-3 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-background/90 shadow-sm transition-all hover:bg-background hover:shadow-md disabled:opacity-50"
         >
-          <Heart className={cn("h-4 w-4 transition-colors", isFavorite ? "fill-rose text-rose" : "text-muted-foreground")} />
+          <Heart className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors", isFavorite ? "fill-rose text-rose" : "text-muted-foreground")} />
         </button>
 
         {/* Category tag */}
-        <div className="absolute bottom-3 left-3">
-          <span className="rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
+        <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3">
+          <span className="rounded-full bg-background/90 px-2 py-0.5 text-[10px] sm:text-xs font-medium text-foreground shadow-sm backdrop-blur-sm tracking-wide uppercase">
             {category}
           </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Original */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">{original.brand}</p>
-            <p className="truncate text-sm font-medium text-foreground">{original.name}</p>
+            <p className="text-[10px] sm:text-xs font-medium tracking-widest uppercase text-muted-foreground">{original.brand}</p>
+            <p className="truncate text-sm sm:text-[15px] font-display font-semibold text-foreground leading-snug">{original.name}</p>
           </div>
-          <span className="shrink-0 text-sm font-semibold text-muted-foreground line-through">
+          <span className="shrink-0 text-sm font-medium text-muted-foreground line-through mt-4">
             {formatPrice(original)}
           </span>
         </div>
 
         {/* Divider */}
-        <div className="my-3 flex items-center gap-2">
+        <div className="my-2.5 sm:my-3 flex items-center gap-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-primary font-medium">DUPE</span>
+          <span className="text-[10px] tracking-[0.2em] uppercase font-semibold text-primary">dupe</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
         {/* Dupe */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">{dupe.brand}</p>
-            <p className="truncate text-sm font-medium text-foreground">{dupe.name}</p>
+            <p className="text-[10px] sm:text-xs font-medium tracking-widest uppercase text-muted-foreground">{dupe.brand}</p>
+            <p className="truncate text-sm sm:text-[15px] font-display font-semibold text-foreground leading-snug">{dupe.name}</p>
           </div>
-          <span className="shrink-0 text-sm font-bold text-primary">
+          <span className="shrink-0 text-sm sm:text-base font-bold text-primary mt-4">
             {formatPrice(dupe)}
           </span>
         </div>
 
         {/* Shared actives pills */}
         {sharedActives.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
+          <div className="mt-2.5 sm:mt-3 flex flex-wrap gap-1">
             {sharedActives.slice(0, 3).map((a) => (
               <span key={a} className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
                 {a.replace(/-/g, ' ')}

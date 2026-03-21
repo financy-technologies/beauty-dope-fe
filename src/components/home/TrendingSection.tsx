@@ -102,7 +102,7 @@ const TrendingSection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex flex-col justify-center"
           >
-            <div className="rounded-2xl bg-gradient-hero border border-border/50 p-8 md:p-12">
+            <div className="rounded-2xl bg-gradient-hero border border-border/50 p-5 sm:p-8 md:p-12">
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="text-center">
