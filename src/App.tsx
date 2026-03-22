@@ -8,6 +8,7 @@ import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 import DupeDetail from "./pages/DupeDetail";
+import DupesFinderAdvanced from "./pages/DupesFinderAdvanced";
 import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import About from "./pages/About";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/dupe/:id" element={<DupeDetail />} />
+            <Route path="/dupes-finder" element={<DupesFinderAdvanced />} />
             <Route path="/signup" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/favorites" element={<Favorites />} />
