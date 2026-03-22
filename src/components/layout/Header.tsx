@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, Heart, Menu, X, LogOut } from "lucide-react";
+import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -13,8 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+const TOOLS = [
+  { name: "Ingredient Analyzer", href: "/ingredient-analyzer", icon: FlaskConical, desc: "Decode any ingredient list" },
+  { name: "Compare Products", href: "/compare", icon: GitCompareArrows, desc: "Side-by-side comparison" },
+  { name: "Ingredients Database", href: "/ingredients", icon: Search, desc: "Browse 35+ ingredients" },
+  { name: "Skin Type Quiz", href: "/quiz", icon: Sparkles, desc: "Find your skin type" },
+];
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -34,14 +42,14 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="DupeFinder logo" className="h-8 w-8" />
+          <img src="/logo.svg" alt="Skinevora logo" className="h-8 w-8" />
           <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
-            Duplo<span className="text-primary">Skin</span>
+            Skine<span className="text-primary">vora</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.name}
@@ -51,6 +59,31 @@ const Header = () => {
               {link.name}
             </Link>
           ))}
+
+          {/* Tools dropdown */}
+          <DropdownMenu open={toolsOpen} onOpenChange={setToolsOpen}>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground outline-none">
+                Tools
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${toolsOpen ? "rotate-180" : ""}`} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-64 p-2">
+              {TOOLS.map(({ name, href, icon: Icon, desc }) => (
+                <DropdownMenuItem key={href} asChild>
+                  <Link to={href} className="flex items-start gap-3 px-2 py-2.5 cursor-pointer rounded-lg">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{name}</p>
+                      <p className="text-xs text-muted-foreground">{desc}</p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* Actions */}
@@ -125,18 +158,37 @@ const Header = () => {
             exit={{ opacity: 0, height: 0 }}
             className="border-t border-border md:hidden"
           >
-            <nav className="container flex flex-col gap-4 px-4 py-6">
+            <nav className="container flex flex-col gap-1 px-4 py-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
-                  className="text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
-              <div className="flex gap-4 pt-4 border-t border-border">
+
+              {/* Tools section in mobile */}
+              <div className="pt-2 mt-1 border-t border-border">
+                <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Tools
+                </p>
+                {TOOLS.map(({ name, href, icon: Icon }) => (
+                  <Link
+                    key={href}
+                    to={href}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+                    {name}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="flex gap-3 pt-3 mt-1 border-t border-border">
                 <Button variant="outline" size="sm" className="flex-1" asChild>
                   <Link to="/favorites" onClick={() => setIsMenuOpen(false)}>
                     <Heart className="h-4 w-4 mr-2" />

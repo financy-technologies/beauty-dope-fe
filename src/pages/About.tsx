@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { FlaskConical, Users, ShieldCheck, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
 
 const VALUES = [
   {
@@ -23,12 +24,17 @@ const VALUES = [
   {
     icon: Zap,
     title: "Savings That Matter",
-    description: "We focus on products where you can save significantly — not just pennies. The average DuploSkin user saves ₹4,000+ per year.",
+    description: "We focus on products where you can save significantly — not just pennies. The average Skinevora user saves ₹4,000+ per year.",
   },
 ];
 
 const About = () => (
   <div className="min-h-screen flex flex-col">
+    <SEO
+      title="About Us"
+      description="Skinevora was built by beauty enthusiasts who believe great skin shouldn't cost a fortune. Discover our mission, values, and ingredient-science approach."
+      canonical="/about"
+    />
     <Header />
     <main className="flex-1">
 
@@ -47,7 +53,7 @@ const About = () => (
               <span className="text-gradient-teal italic">shouldn't cost a fortune</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground md:text-lg">
-              DuploSkin was built by beauty enthusiasts who were tired of paying luxury prices
+              Skinevora was built by beauty enthusiasts who were tired of paying luxury prices
               for formulas that have affordable twins. We used ingredient science to close that gap.
             </p>
           </motion.div>
@@ -62,7 +68,7 @@ const About = () => (
             <p className="text-muted-foreground leading-relaxed">
               The beauty industry has a transparency problem. A ₹20,000 serum and a ₹500 serum can
               share nearly identical active ingredients — but brands spend millions ensuring you never
-              find out. DuploSkin exists to fix that. We build tools that give every beauty lover
+              find out. Skinevora exists to fix that. We build tools that give every beauty lover
               access to ingredient-matched alternatives, regardless of their budget.
             </p>
             <p className="text-muted-foreground leading-relaxed">

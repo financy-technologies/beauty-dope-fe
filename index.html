@@ -2,18 +2,109 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DuploSkin — Find your skin's smarter match</title>
-    <meta name="description" content="Find affordable dupes for your favourite skincare and beauty products. Ingredient science, not brand loyalty." />
-    <meta name="author" content="DuploSkin" />
 
-    <meta property="og:title" content="DuploSkin — Find your skin's smarter match" />
-    <meta property="og:description" content="Find affordable dupes for your favourite skincare and beauty products. Ingredient science, not brand loyalty." />
+    <!-- Favicon & manifest -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#227d92" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- Primary SEO -->
+    <title>Skinevora — Find your skin's smarter match</title>
+    <meta name="description" content="Discover affordable, ingredient-matched dupes for luxury skincare and makeup. Science-backed analysis, 2,500+ verified dupe pairs — free on Skinevora." />
+    <meta name="keywords" content="skincare dupes, makeup dupes, affordable skincare, ingredient analysis, beauty alternatives, skincare comparison, dupe finder, Skinevora" />
+    <meta name="author" content="Skinevora" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://skinevora.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Skinevora" />
+    <meta property="og:title" content="Skinevora — Find your skin's smarter match" />
+    <meta property="og:description" content="Discover affordable, ingredient-matched dupes for luxury skincare and makeup. Science-backed analysis, 2,500+ verified dupe pairs." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://skinevora.com/" />
+    <meta property="og:image" content="https://skinevora.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Skinevora — Science-backed skincare dupe finder" />
+    <meta property="og:locale" content="en_IN" />
 
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@DuploSkin" />
+    <meta name="twitter:site" content="@Skinevora" />
+    <meta name="twitter:creator" content="@Skinevora" />
+    <meta name="twitter:title" content="Skinevora — Find your skin's smarter match" />
+    <meta name="twitter:description" content="Discover affordable, ingredient-matched dupes for luxury skincare and makeup. 2,500+ verified dupe pairs." />
+    <meta name="twitter:image" content="https://skinevora.com/og-image.jpg" />
+
+    <!-- PWA / Mobile -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Skinevora" />
+    <meta name="application-name" content="Skinevora" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Performance hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!-- JSON-LD: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Skinevora",
+      "url": "https://skinevora.com",
+      "logo": "https://skinevora.com/logo.svg",
+      "sameAs": [
+        "https://twitter.com/Skinevora",
+        "https://instagram.com/skinevora"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hello@skinevora.com",
+        "contactType": "customer support"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: WebSite with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Skinevora",
+      "url": "https://skinevora.com",
+      "description": "Science-backed skincare and makeup dupe finder with ingredient analysis tools.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://skinevora.com/browse?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: SiteNavigationElement -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Skinevora Navigation",
+      "itemListElement": [
+        { "@type": "SiteNavigationElement", "position": 1, "name": "Browse Dupes",          "url": "https://skinevora.com/browse" },
+        { "@type": "SiteNavigationElement", "position": 2, "name": "Ingredient Analyzer",   "url": "https://skinevora.com/ingredient-analyzer" },
+        { "@type": "SiteNavigationElement", "position": 3, "name": "Compare Products",      "url": "https://skinevora.com/compare" },
+        { "@type": "SiteNavigationElement", "position": 4, "name": "Ingredients Database",  "url": "https://skinevora.com/ingredients" },
+        { "@type": "SiteNavigationElement", "position": 5, "name": "Skin Type Quiz",        "url": "https://skinevora.com/quiz" }
+      ]
+    }
+    </script>
   </head>
 
   <body>

@@ -10,11 +10,11 @@ const Footer = () => {
       { name: "Makeup", href: "/browse?category=makeup" },
       { name: "Trending", href: "/browse?sort=trending" },
     ],
-    community: [
-      { name: "Browse All Dupes", href: "/browse" },
-      { name: "Trending", href: "/browse?sort=trending" },
-      { name: "Top Rated", href: "/browse?sort=rating" },
-      { name: "Best Savings", href: "/browse?sort=savings" },
+    tools: [
+      { name: "Ingredient Analyzer", href: "/ingredient-analyzer" },
+      { name: "Compare Products", href: "/compare" },
+      { name: "Ingredients Database", href: "/ingredients" },
+      { name: "Skin Type Quiz", href: "/quiz" },
     ],
     company: [
       { name: "About Us", href: "/about" },
@@ -32,7 +32,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
               <span className="font-display text-2xl font-semibold tracking-tight text-white">
-                Duplo<span className="text-gold-light">Skin</span>
+                Skine<span className="text-gold-light">vora</span>
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm text-white/50">
@@ -100,10 +100,10 @@ const Footer = () => {
 
           <div>
             <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
-              Community
+              Tools
             </h4>
             <ul className="space-y-3">
-              {footerLinks.community.map((link) => (
+              {footerLinks.tools.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
@@ -138,7 +138,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
           <p className="text-sm text-white/30">
-            © {currentYear} DuploSkin. All rights reserved.
+            © {currentYear} Skinevora. All rights reserved.
           </p>
           <p className="text-sm text-white/30">
             Made with ♡ for beauty lovers everywhere

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SEO from "@/components/SEO";
 
 const SORT_OPTIONS = [
   { value: "similarity",  label: "Best Match" },
@@ -65,8 +66,19 @@ const Browse = () => {
     ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1) + ' Dupes'
     : 'Browse All Dupes';
 
+  const seoTitle = subcategoryParam
+    ? subcategoryParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) + ' Dupes'
+    : categoryParam
+    ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1) + ' Dupes'
+    : 'Browse All Skincare & Makeup Dupes';
+
+  const seoDescription = categoryParam
+    ? `Browse ingredient-matched ${categoryParam} dupes on Skinevora. Find affordable alternatives verified by science and community reviews.`
+    : 'Browse 2,500+ ingredient-matched dupes for luxury skincare and makeup on Skinevora. Sort by savings, similarity, and top-rated picks.';
+
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title={seoTitle} description={seoDescription} canonical="/browse" />
       <Header />
       <main className="flex-1 container px-4 py-10 md:px-6">
 

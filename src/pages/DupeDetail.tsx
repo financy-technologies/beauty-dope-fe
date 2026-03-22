@@ -6,6 +6,7 @@ import ReviewSection from "@/components/dupe/ReviewSection";
 import { useDupeDetail } from "@/hooks/api/useDupeDetail";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import SEO from "@/components/SEO";
 
 const LABEL_STYLES: Record<string, string> = {
   'exact-match': 'bg-primary text-white',
@@ -29,8 +30,18 @@ const DupeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: dupe, isLoading, error } = useDupeDetail(id);
 
+  const seoBrand = dupe?.original?.brand ?? "";
+  const seoName  = dupe?.original?.name ?? "";
+  const dupeBrand = dupe?.dupe?.brand ?? "";
+
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title={seoName ? `${seoName} Dupe — ${seoBrand} vs ${dupeBrand}` : "Dupe Comparison"}
+        description={seoName ? `Compare ${seoName} by ${seoBrand} with its affordable dupe by ${dupeBrand}. See ingredient similarity, savings, and community reviews on Skinevora.` : "Ingredient-matched dupe comparison on Skinevora."}
+        canonical={id ? `/dupe/${id}` : undefined}
+        ogType="product"
+      />
       <Header />
       <main className="flex-1 container px-4 py-8 md:px-6 max-w-5xl">
         <Link

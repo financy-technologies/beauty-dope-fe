@@ -5,19 +5,20 @@ import { Mail, MessageSquare, Twitter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 
 const CHANNELS = [
   {
     icon: Mail,
     title: "Email",
     description: "For partnerships, press, or general enquiries.",
-    value: "hello@duploskin.com",
+    value: "hello@skinevora.com",
   },
   {
     icon: Twitter,
     title: "Twitter / X",
     description: "DMs open for quick questions and feedback.",
-    value: "@DuploSkin",
+    value: "@Skinevora",
   },
   {
     icon: MessageSquare,
@@ -37,6 +38,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="Contact Us"
+        description="Get in touch with the Skinevora team. Report a bug, suggest a dupe, or ask about partnerships — we'd love to hear from you."
+        canonical="/contact"
+      />
       <Header />
       <main className="flex-1">
 

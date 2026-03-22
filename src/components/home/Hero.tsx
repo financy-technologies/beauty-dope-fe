@@ -66,7 +66,7 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground md:text-lg"
           >
-            DuploSkin matches luxury skincare & makeup products with affordable dupes
+            Skinevora matches luxury skincare & makeup products with affordable dupes
             using ingredient science — not guesswork.
           </motion.p>
 

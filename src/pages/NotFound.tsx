@@ -3,6 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { ArrowLeft, Search } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SEO from "@/components/SEO";
 
 const NotFound = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Page Not Found" description="The page you're looking for doesn't exist." noIndex />
       <Header />
       <main className="flex-1 flex items-center justify-center bg-gradient-hero">
         <div className="container px-4 md:px-6">

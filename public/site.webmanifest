@@ -1,0 +1,41 @@
+{
+  "name": "Skinevora",
+  "short_name": "Skinevora",
+  "description": "Science-backed skincare dupe finder — find affordable alternatives to luxury beauty products.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f8",
+  "theme_color": "#227d92",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["beauty", "health", "lifestyle", "shopping"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Browse Dupes",
+      "short_name": "Browse",
+      "description": "Browse ingredient-matched skincare dupes",
+      "url": "/browse",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Analyze Ingredients",
+      "short_name": "Analyzer",
+      "description": "Paste an ingredient list and decode it instantly",
+      "url": "/ingredient-analyzer",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    }
+  ]
+}

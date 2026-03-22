@@ -7,6 +7,7 @@ import { useFavoritesDupes } from "@/hooks/api/useFavorites";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const Favorites = () => {
   const { user, loading: authLoading } = useAuth();
@@ -50,6 +51,7 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Your Favourites" description="Your saved skincare and makeup dupes on Skinevora." noIndex />
       <Header />
       <main className="flex-1 container px-4 py-10 md:px-6">
         <div className="mb-8 flex items-center gap-3">

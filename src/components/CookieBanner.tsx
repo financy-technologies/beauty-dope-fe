@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const COOKIE_KEY = "duploskin_cookie_consent";
+const COOKIE_KEY = "skinevora_cookie_consent";
 
 const CookieBanner = () => {
   const [visible, setVisible] = useState(false);

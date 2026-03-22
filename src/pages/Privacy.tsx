@@ -1,5 +1,6 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SEO from "@/components/SEO";
 
 const SECTIONS = [
   {
@@ -8,7 +9,7 @@ const SECTIONS = [
   },
   {
     title: "How We Use Your Information",
-    content: `We use your information to operate and improve DuploSkin, personalise your experience (e.g. saved favourites), send service-related emails (account confirmation, password reset), and analyse usage patterns to improve our ingredient-matching algorithms. We do not sell your personal data to third parties.`,
+    content: `We use your information to operate and improve Skinevora, personalise your experience (e.g. saved favourites), send service-related emails (account confirmation, password reset), and analyse usage patterns to improve our ingredient-matching algorithms. We do not sell your personal data to third parties.`,
   },
   {
     title: "Cookies",
@@ -20,7 +21,7 @@ const SECTIONS = [
   },
   {
     title: "Data Retention",
-    content: `We retain your account information for as long as your account is active. You can request deletion of your account and associated data at any time by contacting hello@duploskin.com.`,
+    content: `We retain your account information for as long as your account is active. You can request deletion of your account and associated data at any time by contacting hello@skinevora.com.`,
   },
   {
     title: "Security",
@@ -28,20 +29,26 @@ const SECTIONS = [
   },
   {
     title: "Children's Privacy",
-    content: `DuploSkin is not directed to children under 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us and we will delete it.`,
+    content: `Skinevora is not directed to children under 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us and we will delete it.`,
   },
   {
     title: "Changes to This Policy",
-    content: `We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page with an updated date. Continued use of DuploSkin after changes constitutes acceptance of the updated policy.`,
+    content: `We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page with an updated date. Continued use of Skinevora after changes constitutes acceptance of the updated policy.`,
   },
   {
     title: "Contact Us",
-    content: `If you have questions about this Privacy Policy, please contact us at hello@duploskin.com.`,
+    content: `If you have questions about this Privacy Policy, please contact us at hello@skinevora.com.`,
   },
 ];
 
 const Privacy = () => (
   <div className="min-h-screen flex flex-col">
+    <SEO
+      title="Privacy Policy"
+      description="Read Skinevora's privacy policy — how we collect, use, and protect your personal data on our skincare dupe platform."
+      canonical="/privacy"
+      noIndex={false}
+    />
     <Header />
     <main className="flex-1">
       <section className="bg-gradient-hero py-16 md:py-20">
@@ -58,7 +65,7 @@ const Privacy = () => (
         <div className="container px-4 md:px-6">
           <div className="mx-auto max-w-3xl space-y-10">
             <p className="text-muted-foreground leading-relaxed">
-              At DuploSkin, your privacy is important to us. This Privacy Policy explains how we collect,
+              At Skinevora, your privacy is important to us. This Privacy Policy explains how we collect,
               use, and protect your information when you use our platform.
             </p>
             {SECTIONS.map((s) => (

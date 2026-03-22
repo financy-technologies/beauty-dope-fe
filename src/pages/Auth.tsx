@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 
 const Auth = () => {
   const location = useLocation();
@@ -41,10 +42,15 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cream/30 px-4">
+      <SEO
+        title={isLogin ? "Sign In" : "Create Account"}
+        description={isLogin ? "Sign in to your Skinevora account to access your saved favourites and dupe recommendations." : "Create a free Skinevora account to save your favourite dupes and submit reviews."}
+        noIndex
+      />
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-card">
         <div className="mb-8 text-center">
           <Link to="/" className="font-display text-2xl font-semibold tracking-tight">
-            Duplo<span className="text-primary">Skin</span>
+            Skine<span className="text-primary">vora</span>
           </Link>
           <h1 className="mt-4 text-xl font-semibold text-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
