@@ -1,7 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { Mail, MessageSquare, Twitter } from "lucide-react";
+import { Mail, MessageSquare, Twitter, Linkedin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -13,18 +13,28 @@ const CHANNELS = [
     title: "Email",
     description: "For partnerships, press, or general enquiries.",
     value: "hello@skinevora.com",
+    href: "mailto:hello@skinevora.com",
   },
   {
     icon: Twitter,
-    title: "Twitter / X",
+    title: "X (Twitter)",
     description: "DMs open for quick questions and feedback.",
-    value: "@Skinevora",
+    value: "@skinevora",
+    href: "https://x.com/skinevora",
+  },
+  {
+    icon: Linkedin,
+    title: "LinkedIn",
+    description: "Follow us for brand news, partnerships and updates.",
+    value: "Skinevora",
+    href: "https://www.linkedin.com/company/skinevora/",
   },
   {
     icon: MessageSquare,
-    title: "Community",
-    description: "Share dupe discoveries and connect with other users.",
-    value: "Browse & rate dupes",
+    title: "Instagram",
+    description: "Tag us in your dupe finds and skincare wins.",
+    value: "@skinevora",
+    href: "https://www.instagram.com/skinevora/",
   },
 ];
 
@@ -79,7 +89,18 @@ const Contact = () => {
                     <div>
                       <p className="font-semibold text-foreground">{c.title}</p>
                       <p className="mt-0.5 text-sm text-muted-foreground">{c.description}</p>
-                      <p className="mt-1 text-sm font-medium text-primary">{c.value}</p>
+                      {c.href ? (
+                        <a
+                          href={c.href}
+                          target={c.href.startsWith("mailto") ? undefined : "_blank"}
+                          rel="noopener noreferrer"
+                          className="mt-1 text-sm font-medium text-primary hover:underline"
+                        >
+                          {c.value}
+                        </a>
+                      ) : (
+                        <p className="mt-1 text-sm font-medium text-primary">{c.value}</p>
+                      )}
                     </div>
                   </div>
                 ))}
