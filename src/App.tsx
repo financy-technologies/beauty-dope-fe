@@ -21,6 +21,7 @@ import IngredientAnalyzer from "./pages/IngredientAnalyzer";
 import CompareProducts from "./pages/CompareProducts";
 import IngredientsDatabase from "./pages/IngredientsDatabase";
 import SkinQuiz from "./pages/SkinQuiz";
+import ProfilePage from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/compare" element={<CompareProducts />} />
             <Route path="/ingredients" element={<IngredientsDatabase />} />
             <Route path="/quiz" element={<SkinQuiz />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

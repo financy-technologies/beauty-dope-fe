@@ -3,9 +3,12 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, RotateCcw, CheckCircle2 } from "lucide-react";
+import { Sparkles, ChevronRight, RotateCcw, CheckCircle2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useSaveSkinQuiz } from "@/hooks/api/useProfile";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── Quiz data ─────────────────────────────────────────────────────────────────
 const QUESTIONS = [
@@ -149,6 +152,29 @@ const SkinQuiz = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [result, setResult] = useState<keyof typeof SKIN_TYPES | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [savedToProfile, setSavedToProfile] = useState(false);
+
+  const { user } = useAuth();
+  const saveSkinQuiz = useSaveSkinQuiz();
+  const { toast } = useToast();
+
+  const handleSaveToProfile = async () => {
+    if (!result) return;
+    try {
+      await saveSkinQuiz.mutateAsync({
+        skinType: result,
+        skinConcerns: [],
+        skinSensitivities: [],
+      });
+      setSavedToProfile(true);
+      toast({
+        title: "Saved to your profile! +25 points",
+        description: "Your skin type has been saved. Visit your profile to add more details.",
+      });
+    } catch {
+      toast({ title: "Failed to save", variant: "destructive" });
+    }
+  };
 
   const progress = ((currentQ) / QUESTIONS.length) * 100;
 
@@ -287,8 +313,40 @@ const SkinQuiz = () => {
                       </div>
                     </div>
 
+                    {/* Save to profile CTA */}
+                    {user && !savedToProfile && (
+                      <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Save to your profile</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Earn <span className="font-semibold text-primary">+25 points</span> and get personalised product picks.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="flex-shrink-0 gap-1.5"
+                          onClick={handleSaveToProfile}
+                          disabled={saveSkinQuiz.isPending}
+                        >
+                          <Save className="h-3.5 w-3.5" />
+                          {saveSkinQuiz.isPending ? "Saving…" : "Save"}
+                        </Button>
+                      </div>
+                    )}
+                    {user && savedToProfile && (
+                      <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-emerald-800">Saved! +25 points earned</p>
+                          <p className="text-xs text-emerald-700 mt-0.5">
+                            Visit your <Link to="/profile" className="underline">profile</Link> to add more skin details.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* CTAs */}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                    <div className="mt-4 flex flex-col sm:flex-row gap-3">
                       <Button asChild className="flex-1 font-semibold gap-2">
                         <Link to={`/browse?skin_type=${result}`}>
                           Browse Products for {skinType.label}

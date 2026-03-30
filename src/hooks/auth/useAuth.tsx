@@ -10,6 +10,12 @@ interface ApiUser {
     displayName: string | null;
     avatarUrl: string | null;
     bio: string | null;
+    skinType: string | null;
+    skinConcerns: string[];
+    skinSensitivities: string[];
+    ageRange: string | null;
+    points: number;
+    pointsEarnedTotal: number;
   } | null;
 }
 

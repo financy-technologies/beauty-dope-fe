@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles } from "lucide-react";
+import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -108,11 +108,23 @@ const Header = () => {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem className="text-muted-foreground text-xs">
                   {user.email}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    My Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile#rewards" className="cursor-pointer">
+                    <Gift className="mr-2 h-4 w-4" />
+                    Rewards
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/favorites" className="cursor-pointer">
                     <Heart className="mr-2 h-4 w-4" />
@@ -185,7 +197,7 @@ const Header = () => {
                 ))}
               </div>
 
-              <div className="flex gap-3 pt-3 mt-1 border-t border-border">
+              <div className="flex gap-2 pt-3 mt-1 border-t border-border flex-wrap">
                 <Button variant="outline" size="sm" className="flex-1" asChild>
                   <Link to="/favorites" onClick={() => setIsMenuOpen(false)}>
                     <Heart className="h-4 w-4 mr-2" />
@@ -193,10 +205,18 @@ const Header = () => {
                   </Link>
                 </Button>
                 {user ? (
-                  <Button size="sm" className="flex-1" onClick={() => { handleSignOut(); setIsMenuOpen(false); }}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </Link>
+                    </Button>
+                    <Button size="sm" className="w-full" onClick={() => { handleSignOut(); setIsMenuOpen(false); }}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
                 ) : (
                   <Button size="sm" className="flex-1" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
