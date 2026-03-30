@@ -12,6 +12,7 @@ interface SEOProps {
 
 const BASE_URL = "https://skinevora.com";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
+const SITE_LOGO = `${BASE_URL}/favicon.png`;
 const SITE_NAME = "Skinevora";
 
 export default function SEO({
@@ -51,6 +52,10 @@ export default function SEO({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={`${SITE_NAME} logo`} />
+
+      {/* App icon for search engines (Google favours explicit logo tag) */}
+      <link rel="icon" type="image/png" href={SITE_LOGO} />
 
       {/* JSON-LD */}
       {jsonLd && (
