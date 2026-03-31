@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Search, FlaskConical, CheckCircle2, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useSearchParams } from "react-router-dom";
 
 // ─── Full ingredient knowledge base ───────────────────────────────────────────
 const INGREDIENTS = [
@@ -142,8 +143,14 @@ function IngredientCard({ ing, index }: { ing: typeof INGREDIENTS[0]; index: num
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 const IngredientsDatabase = () => {
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    if (q) setQuery(q);
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     return INGREDIENTS.filter((ing) => {

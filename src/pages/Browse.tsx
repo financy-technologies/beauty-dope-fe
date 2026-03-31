@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -27,8 +27,9 @@ const Browse = () => {
   const subcategoryParam = searchParams.get("subcategory") || undefined;
   const sortParam       = (searchParams.get("sort") as any) || "similarity";
 
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [activeSearch, setActiveSearch] = useState("");
+  const initialQuery = searchParams.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [activeSearch, setActiveSearch] = useState(initialQuery);
 
   const { data: categories } = useCategories();
 
@@ -55,9 +56,17 @@ const Browse = () => {
     setSearchParams(next);
   };
 
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setSearchQuery(q);
+    setActiveSearch(q);
+  }, [searchParams]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearch(searchQuery);
+    const trimmed = searchQuery.trim();
+    setParam("q", trimmed || undefined);
+    setActiveSearch(trimmed);
   };
 
   const pageTitle = subcategoryParam
@@ -93,15 +102,28 @@ const Browse = () => {
                 placeholder="Search by brand or product…"
                 value={searchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (!e.target.value) setActiveSearch("");
+                  const next = e.target.value;
+                  setSearchQuery(next);
+                  if (!next) {
+                    setActiveSearch("");
+                    setParam("q", undefined);
+                  }
                 }}
                 className="pl-9"
               />
             </div>
             <Button type="submit">Search</Button>
             {activeSearch && (
-              <Button type="button" variant="ghost" size="icon" onClick={() => { setSearchQuery(""); setActiveSearch(""); }}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveSearch("");
+                  setParam("q", undefined);
+                }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             )}

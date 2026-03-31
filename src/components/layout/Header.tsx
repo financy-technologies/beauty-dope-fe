@@ -14,10 +14,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const TOOLS = [
+  { name: "Dupe Finder", href: "/dupes", icon: Search, desc: "Find similar alternatives" },
   { name: "Ingredient Analyzer", href: "/ingredient-analyzer", icon: FlaskConical, desc: "Decode any ingredient list" },
   { name: "Compare Products", href: "/compare", icon: GitCompareArrows, desc: "Side-by-side comparison" },
-  { name: "Ingredients Database", href: "/ingredients", icon: Search, desc: "Browse 35+ ingredients" },
-  { name: "Skin Type Quiz", href: "/quiz", icon: Sparkles, desc: "Find your skin type" },
+  { name: "Ingredients Database", href: "/ingredients", icon: Search, desc: "Browse skincare ingredients" },
+  { name: "Routine Builder", href: "/routine-builder", icon: Sparkles, desc: "Build AM/PM routine" },
+  { name: "Skin Guide", href: "/skin-guide", icon: Sparkles, desc: "Goal-based guidance" },
 ];
 
 const Header = () => {
@@ -29,6 +31,7 @@ const Header = () => {
   const navLinks = [
     { name: "Skincare", href: "/browse?category=skincare" },
     { name: "Makeup", href: "/browse?category=makeup" },
+    { name: "Brands", href: "/brands" },
     { name: "Trending", href: "/browse?sort=trending" },
   ];
 

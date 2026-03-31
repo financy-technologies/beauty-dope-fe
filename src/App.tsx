@@ -22,6 +22,13 @@ import CompareProducts from "./pages/CompareProducts";
 import IngredientsDatabase from "./pages/IngredientsDatabase";
 import SkinQuiz from "./pages/SkinQuiz";
 import ProfilePage from "./pages/Profile";
+import Brands from "./pages/Brands";
+import RoutineBuilder from "./pages/RoutineBuilder";
+import SkinGuide from "./pages/SkinGuide";
+import Methodology from "./pages/Methodology";
+import Disclaimer from "./pages/Disclaimer";
+import Community from "./pages/Community";
+import Blog from "./pages/Blog";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +46,7 @@ const App = () => (
             <Route path="/browse" element={<Browse />} />
             <Route path="/dupe/:id" element={<DupeDetail />} />
             <Route path="/dupes-finder" element={<DupesFinderAdvanced />} />
+            <Route path="/dupes" element={<DupesFinderAdvanced />} />
             <Route path="/signup" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/favorites" element={<Favorites />} />
@@ -48,9 +56,18 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/ingredient-analyzer" element={<IngredientAnalyzer />} />
             <Route path="/compare" element={<CompareProducts />} />
+            <Route path="/product/compare" element={<CompareProducts />} />
             <Route path="/ingredients" element={<IngredientsDatabase />} />
             <Route path="/quiz" element={<SkinQuiz />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/brands" element={<Brands />} />
+            <Route path="/routine-builder" element={<RoutineBuilder />} />
+            <Route path="/skin-guide" element={<SkinGuide />} />
+            <Route path="/methodology" element={<Methodology />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/search" element={<Browse />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

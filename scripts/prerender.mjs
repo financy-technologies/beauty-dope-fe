@@ -12,14 +12,23 @@ const routes = [
   "/",
   "/browse",
   "/dupes-finder",
+  "/dupes",
   "/ingredient-analyzer",
   "/compare",
+  "/product/compare",
   "/ingredients",
   "/quiz",
+  "/brands",
+  "/routine-builder",
+  "/skin-guide",
   "/about",
+  "/methodology",
+  "/community",
+  "/blog",
   "/contact",
   "/privacy",
   "/terms",
+  "/disclaimer",
 ];
 
 function getFreePort() {

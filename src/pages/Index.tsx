@@ -4,6 +4,7 @@ import HowItWorks from "@/components/home/HowItWorks";
 import CategoryNav from "@/components/home/CategoryNav";
 import FeaturedDupes from "@/components/home/FeaturedDupes";
 import TrendingSection from "@/components/home/TrendingSection";
+import StartHere from "@/components/home/StartHere";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 
@@ -30,6 +31,7 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <Hero />
+        <StartHere />
         <HowItWorks />
         <CategoryNav />
         <FeaturedDupes />

@@ -8,19 +8,27 @@ const Footer = () => {
       { name: "Browse All Dupes", href: "/browse" },
       { name: "Skincare", href: "/browse?category=skincare" },
       { name: "Makeup", href: "/browse?category=makeup" },
+      { name: "By Brand", href: "/brands" },
+      { name: "Skin Guide", href: "/skin-guide" },
       { name: "Trending", href: "/browse?sort=trending" },
     ],
     tools: [
+      { name: "Dupe Finder", href: "/dupes" },
       { name: "Ingredient Analyzer", href: "/ingredient-analyzer" },
       { name: "Compare Products", href: "/compare" },
+      { name: "Routine Builder", href: "/routine-builder" },
       { name: "Ingredients Database", href: "/ingredients" },
       { name: "Skin Type Quiz", href: "/quiz" },
     ],
     company: [
       { name: "About Us", href: "/about" },
+      { name: "Methodology", href: "/methodology" },
+      { name: "Community", href: "/community" },
+      { name: "Blog", href: "/blog" },
       { name: "Contact", href: "/contact" },
       { name: "Privacy Policy", href: "/privacy" },
       { name: "Terms of Service", href: "/terms" },
+      { name: "Disclaimer", href: "/disclaimer" },
     ],
   };
 
