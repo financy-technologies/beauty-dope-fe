@@ -10,6 +10,19 @@ export interface SkinProfile {
   skinQuizCompletedAt: string | null;
 }
 
+export interface ProfileRoutineSlot {
+  id: string;
+  step: string;
+  productId: string;
+  productName: string;
+  notes: string;
+}
+
+export interface ProfileRoutineData {
+  morning: ProfileRoutineSlot[];
+  night: ProfileRoutineSlot[];
+}
+
 export interface FullProfile {
   id: string;
   username: string | null;
@@ -25,6 +38,7 @@ export interface FullProfile {
   skinSensitivities: string[];
   ageRange: SkinProfile['ageRange'];
   skinQuizCompletedAt: string | null;
+  routineData: ProfileRoutineData | null;
 }
 
 export interface UpdateProfilePayload {
@@ -36,6 +50,7 @@ export interface UpdateProfilePayload {
   skinConcerns?: string[];
   skinSensitivities?: string[];
   ageRange?: SkinProfile['ageRange'];
+  routineData?: ProfileRoutineData;
 }
 
 export interface SaveSkinQuizPayload {
@@ -74,6 +89,17 @@ export function useSaveSkinQuiz() {
       qc.invalidateQueries({ queryKey: ['profile', 'me'] });
       qc.invalidateQueries({ queryKey: ['rewards', 'points'] });
       qc.invalidateQueries({ queryKey: ['rewards', 'history'] });
+    },
+  });
+}
+
+export function useSaveRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (routineData: ProfileRoutineData) =>
+      api.patch<FullProfile>('/profiles/me', { routineData }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile', 'me'] });
     },
   });
 }

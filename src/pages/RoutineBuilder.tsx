@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useMyProfile, useSaveRoutine } from "@/hooks/api/useProfile";
 
 type RoutineSlot = {
   id: string;
@@ -29,6 +31,24 @@ function emptyRoutine(): RoutineState {
   return { morning: [], night: [] };
 }
 
+function hasRoutineItems(routine: RoutineState): boolean {
+  return routine.morning.length > 0 || routine.night.length > 0;
+}
+
+function loadLocalRoutine(): RoutineState {
+  try {
+    const raw = localStorage.getItem(ROUTINE_KEY);
+    if (!raw) return emptyRoutine();
+    const parsed = JSON.parse(raw) as RoutineState;
+    return {
+      morning: Array.isArray(parsed?.morning) ? parsed.morning : [],
+      night: Array.isArray(parsed?.night) ? parsed.night : [],
+    };
+  } catch {
+    return emptyRoutine();
+  }
+}
+
 const RoutineBuilder = () => {
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
@@ -36,22 +56,66 @@ const RoutineBuilder = () => {
   const [notes, setNotes] = useState("");
   const [period, setPeriod] = useState<"morning" | "night">("morning");
   const [routine, setRoutine] = useState<RoutineState>(emptyRoutine);
+  const hydratedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const lastSavedRoutineRef = useRef("");
 
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { data: profile, isLoading: isProfileLoading } = useMyProfile();
+  const saveRoutine = useSaveRoutine();
+  const saveRoutineMutation = saveRoutine.mutate;
   const { data: products } = useProducts({ search, limit: 20 });
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(ROUTINE_KEY);
-      if (raw) setRoutine(JSON.parse(raw));
-    } catch {
-      setRoutine(emptyRoutine());
+    const userId = user?.id ?? null;
+    if (lastUserIdRef.current !== userId) {
+      lastUserIdRef.current = userId;
+      hydratedRef.current = false;
+      lastSavedRoutineRef.current = "";
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
+    if (hydratedRef.current) return;
+
+    if (user) {
+      if (isProfileLoading) return;
+
+      const remoteRoutine = profile?.routineData ?? null;
+      const initialRoutine = remoteRoutine ?? loadLocalRoutine();
+      setRoutine(initialRoutine);
+      lastSavedRoutineRef.current = JSON.stringify(initialRoutine);
+      hydratedRef.current = true;
+
+      if (!remoteRoutine && hasRoutineItems(initialRoutine)) {
+        saveRoutineMutation(initialRoutine);
+      }
+      return;
+    }
+
+    const localRoutine = loadLocalRoutine();
+    setRoutine(localRoutine);
+    lastSavedRoutineRef.current = JSON.stringify(localRoutine);
+    hydratedRef.current = true;
+  }, [user, isProfileLoading, profile?.routineData, saveRoutineMutation]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+
     localStorage.setItem(ROUTINE_KEY, JSON.stringify(routine));
-  }, [routine]);
+    const serialized = JSON.stringify(routine);
+    if (serialized === lastSavedRoutineRef.current) return;
+    lastSavedRoutineRef.current = serialized;
+
+    if (!user) return;
+
+    const timer = setTimeout(() => {
+      saveRoutineMutation(routine);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [routine, user, saveRoutineMutation]);
 
   const selectedProduct = useMemo(
     () => products?.find((product) => product.id === selectedProductId),
@@ -109,6 +173,9 @@ const RoutineBuilder = () => {
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">Routine Builder</h1>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
               Create your morning and night routine in minutes, then adjust as your skin goals change.
+            </p>
+            <p className="mx-auto mt-2 max-w-2xl text-xs text-muted-foreground/80">
+              {user ? "Signed in: routine syncs to your profile across devices." : "Sign in to sync your routine across devices."}
             </p>
           </div>
         </section>
