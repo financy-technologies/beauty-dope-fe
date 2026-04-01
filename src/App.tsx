@@ -21,6 +21,7 @@ import IngredientAnalyzer from "./pages/IngredientAnalyzer";
 import CompareProducts from "./pages/CompareProducts";
 import IngredientsDatabase from "./pages/IngredientsDatabase";
 import SkinQuiz from "./pages/SkinQuiz";
+import SkinStory from "./pages/SkinStory";
 import ProfilePage from "./pages/Profile";
 import Brands from "./pages/Brands";
 import RoutineBuilder from "./pages/RoutineBuilder";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/product/compare" element={<CompareProducts />} />
             <Route path="/ingredients" element={<IngredientsDatabase />} />
             <Route path="/quiz" element={<SkinQuiz />} />
+            <Route path="/skin-story" element={<SkinStory />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/brands" element={<Brands />} />
             <Route path="/routine-builder" element={<RoutineBuilder />} />

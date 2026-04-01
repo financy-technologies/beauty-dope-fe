@@ -18,6 +18,7 @@ const routes = [
   "/product/compare",
   "/ingredients",
   "/quiz",
+  "/skin-story",
   "/brands",
   "/routine-builder",
   "/skin-guide",
