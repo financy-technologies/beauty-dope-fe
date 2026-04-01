@@ -44,7 +44,7 @@ function getFreePort() {
 async function startServer(port) {
   const server = spawn(
     "node",
-    ["node_modules/.bin/serve", "dist", "-p", port, "--no-clipboard"],
+    ["node_modules/.bin/serve", "dist", "-p", port, "--no-clipboard", "--single"],
     { stdio: "ignore" }
   );
   // Give server a moment to start
