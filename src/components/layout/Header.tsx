@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles, Gift } from "lucide-react";
+import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles, Gift, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const TOOLS = [
+  { name: "Skin Story", href: "/skin-story", icon: Activity, desc: "Deep personalised skin analysis" },
   { name: "Dupe Finder", href: "/dupes", icon: Search, desc: "Find similar alternatives" },
   { name: "Ingredient Analyzer", href: "/ingredient-analyzer", icon: FlaskConical, desc: "Decode any ingredient list" },
   { name: "Compare Products", href: "/compare", icon: GitCompareArrows, desc: "Side-by-side comparison" },
