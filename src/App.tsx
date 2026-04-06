@@ -30,6 +30,7 @@ import Methodology from "./pages/Methodology";
 import Disclaimer from "./pages/Disclaimer";
 import Community from "./pages/Community";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/community" element={<Community />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/search" element={<Browse />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -52,6 +52,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <!-- Preload critical fonts to prevent FOUT -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
 
     <!-- JSON-LD: Organization -->
     <script type="application/ld+json">
@@ -104,7 +107,20 @@
         { "@type": "SiteNavigationElement", "position": 2, "name": "Ingredient Analyzer",   "url": "https://skinevora.com/ingredient-analyzer" },
         { "@type": "SiteNavigationElement", "position": 3, "name": "Compare Products",      "url": "https://skinevora.com/compare" },
         { "@type": "SiteNavigationElement", "position": 4, "name": "Ingredients Database",  "url": "https://skinevora.com/ingredients" },
-        { "@type": "SiteNavigationElement", "position": 5, "name": "Skin Type Quiz",        "url": "https://skinevora.com/quiz" }
+        { "@type": "SiteNavigationElement", "position": 5, "name": "Skin Type Quiz",        "url": "https://skinevora.com/quiz" },
+        { "@type": "SiteNavigationElement", "position": 6, "name": "Blog & Guides",         "url": "https://skinevora.com/blog" },
+        { "@type": "SiteNavigationElement", "position": 7, "name": "Brands",                "url": "https://skinevora.com/brands" }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: BreadcrumbList for homepage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://skinevora.com/" }
       ]
     }
     </script>

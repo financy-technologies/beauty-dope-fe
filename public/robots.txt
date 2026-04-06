@@ -1,13 +1,25 @@
 User-agent: *
 Allow: /
 
-# Block private/account routes from crawling
+# Block private / auth routes from crawling
 Disallow: /login
 Disallow: /signup
 Disallow: /favorites
+Disallow: /profile
+
+# Allow important public content explicitly
+Allow: /browse
+Allow: /blog
+Allow: /blog/
+Allow: /quiz
+Allow: /ingredients
+Allow: /brands
+Allow: /about
+Allow: /contact
+Allow: /methodology
 
 # Crawl-delay for politeness
 Crawl-delay: 1
 
-# Sitemap
+# Sitemap location
 Sitemap: https://skinevora.com/sitemap.xml
