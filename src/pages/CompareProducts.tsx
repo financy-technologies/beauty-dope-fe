@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
-import { GitCompareArrows, Search, X, CheckCircle2, AlertTriangle, Plus } from "lucide-react";
+import { GitCompareArrows, Search, X, CheckCircle2, AlertTriangle, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,12 +19,8 @@ interface Product {
   category: string;
   subcategory?: string;
   description?: string;
-  image_url?: string;
+  imageUrl?: string;      // camelCase — matches entity field name
   ingredients?: string;
-}
-
-interface SearchResults {
-  data?: Product[];
 }
 
 // ─── Ingredient helpers ───────────────────────────────────────────────────────
@@ -79,20 +75,40 @@ function ProductSlot({
   onSelect: (p: Product) => void;
   index: number;
 }) {
-  const [query, setQuery] = useState("");
+  const [inputValue, setInputValue]     = useState("");
+  const [debouncedQ, setDebouncedQ]     = useState("");
+  const [isDropOpen, setIsDropOpen]     = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data, isFetching } = useQuery({
-    queryKey: ["compare-search", query],
-    queryFn: async () => {
-      if (query.length < 2) return { data: [] } as SearchResults;
-      return api.get<SearchResults>(`/products?q=${encodeURIComponent(query)}&limit=6`);
-    },
-    enabled: query.length >= 2,
-    staleTime: 10_000,
+  // Debounce: wait 300 ms after the user stops typing before firing the query
+  const handleChange = (value: string) => {
+    setInputValue(value);
+    setIsDropOpen(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length >= 2) {
+      debounceRef.current = setTimeout(() => setDebouncedQ(value.trim()), 300);
+    } else {
+      setDebouncedQ("");
+    }
+  };
+
+  // API returns Product[] directly (not { data: Product[] })
+  const { data: suggestions = [], isFetching } = useQuery<Product[]>({
+    queryKey: ["compare-search", debouncedQ],
+    queryFn: () =>
+      api.get<Product[]>(`/products?q=${encodeURIComponent(debouncedQ)}&limit=8`),
+    enabled: debouncedQ.length >= 2,
+    staleTime: 30_000,
   });
 
-  const suggestions: Product[] = (data as SearchResults)?.data ?? [];
+  const handleSelect = (p: Product) => {
+    onSelect(p);
+    setInputValue("");
+    setDebouncedQ("");
+    setIsDropOpen(false);
+  };
 
+  // ── Filled slot ──────────────────────────────────────────────────────────────
   if (product) {
     const ing = product.ingredients ? categoriseIngredients(product.ingredients) : null;
     return (
@@ -102,14 +118,16 @@ function ProductSlot({
           <button
             onClick={onRemove}
             className="absolute top-3 right-3 p-1 rounded-full hover:bg-muted transition-colors"
+            aria-label="Remove product"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
-          {product.image_url ? (
+          {product.imageUrl ? (
             <img
-              src={product.image_url}
+              src={product.imageUrl}
               alt={product.name}
               className="mx-auto h-28 w-28 object-cover rounded-xl shadow-soft"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           ) : (
             <div className="mx-auto h-28 w-28 rounded-xl bg-muted flex items-center justify-center">
@@ -127,7 +145,7 @@ function ProductSlot({
           <p className="mt-2 text-center font-display text-xl font-bold text-primary">
             ₹{product.price.toLocaleString("en-IN")}
           </p>
-          <div className="mt-2 flex justify-center gap-2">
+          <div className="mt-2 flex justify-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs">{product.category}</Badge>
             {product.subcategory && (
               <Badge variant="outline" className="text-xs">{product.subcategory}</Badge>
@@ -185,44 +203,113 @@ function ProductSlot({
     );
   }
 
-  // Empty slot — search
+  // ── Empty slot — search input + dropdown ─────────────────────────────────────
+  const showDropdown = isDropOpen && inputValue.trim().length >= 2;
+
   return (
     <div className="rounded-2xl border-2 border-dashed border-border bg-secondary/10 p-5 flex flex-col items-center gap-4">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
         <Plus className="h-7 w-7 text-primary" />
       </div>
       <p className="text-sm font-semibold text-foreground">Add product {index + 1}</p>
+
+      {/* Search input */}
       <div className="w-full relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search product name..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-      {query.length >= 2 && (
-        <div className="w-full rounded-xl border border-border bg-card shadow-soft overflow-hidden max-h-56 overflow-y-auto">
+        <div className="relative">
           {isFetching ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Searching…</div>
-          ) : suggestions.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">No products found</div>
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
           ) : (
-            suggestions.map((p) => (
-              <button
-                key={p.id}
-                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors border-b border-border last:border-0"
-                onClick={() => { onSelect(p); setQuery(""); }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.brand} · ₹{p.price.toLocaleString("en-IN")}</p>
-                </div>
-              </button>
-            ))
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          )}
+          <Input
+            placeholder="Search brand or product name…"
+            value={inputValue}
+            onChange={(e) => handleChange(e.target.value)}
+            onFocus={() => setIsDropOpen(true)}
+            onBlur={() => setTimeout(() => setIsDropOpen(false), 150)}
+            className="pl-9 pr-8"
+            autoComplete="off"
+          />
+          {inputValue && (
+            <button
+              type="button"
+              onClick={() => { setInputValue(""); setDebouncedQ(""); setIsDropOpen(false); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
-      )}
+
+        {/* Results dropdown */}
+        <AnimatePresence>
+          {showDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 rounded-xl border border-border bg-background shadow-elevated overflow-hidden max-h-60 overflow-y-auto"
+            >
+              {/* Loading */}
+              {isFetching && (
+                <div className="py-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Searching…
+                </div>
+              )}
+
+              {/* No results */}
+              {!isFetching && suggestions.length === 0 && (
+                <div className="py-5 px-4 text-center">
+                  <p className="text-sm font-medium text-foreground">No products found</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Try a different brand or product name.
+                  </p>
+                </div>
+              )}
+
+              {/* Results */}
+              {!isFetching && suggestions.length > 0 && (
+                <div className="divide-y divide-border/60">
+                  {suggestions.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
+                      onMouseDown={(e) => e.preventDefault()} // prevent blur before click
+                      onClick={() => handleSelect(p)}
+                    >
+                      {/* Brand initial avatar */}
+                      <div className="h-9 w-9 flex-shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">
+                          {p.brand.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.brand}
+                          {p.price ? ` · ₹${Number(p.price).toLocaleString("en-IN")}` : ""}
+                        </p>
+                      </div>
+                      {p.category && (
+                        <span className="text-[10px] rounded-full border border-border px-2 py-0.5 text-muted-foreground flex-shrink-0">
+                          {p.category}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Type at least 2 characters to search
+      </p>
     </div>
   );
 }
