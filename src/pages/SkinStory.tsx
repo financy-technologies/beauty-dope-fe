@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CheckCircle2, ArrowRight, Sparkles, RotateCcw, Save, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, ArrowRight, Sparkles, RotateCcw, Save, Lock, TrendingUp, Zap, AlertTriangle, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -303,6 +303,220 @@ function InsightChip({ label, value, color }: { label: string; value: string; co
       <p className="font-semibold text-sm capitalize">{value.replace(/-/g, ' ')}</p>
     </div>
   );
+}
+
+// ─── Section Result Card ──────────────────────────────────────────────────────
+
+function ResultRow({ label, value, color = 'bg-slate-50 text-slate-700' }: { label: string; value: string; color?: string }) {
+  return (
+    <div className={cn('rounded-xl px-4 py-3 flex items-center justify-between gap-3', color)}>
+      <p className="text-xs font-medium text-current opacity-70">{label}</p>
+      <p className="text-sm font-semibold capitalize">{value.replace(/-/g, ' ')}</p>
+    </div>
+  );
+}
+
+function TagList({ items, color }: { items: string[]; color: string }) {
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1">
+      {items.map(i => (
+        <Badge key={i} className={cn('border-0 text-xs', color)}>
+          {i.replace(/_/g, ' ')}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function SectionResultCard({
+  sectionId,
+  answers,
+}: {
+  sectionId: 'biology' | 'skin' | 'hair' | 'makeup';
+  answers: AllAnswers;
+}) {
+  // Compute full insights — we only display the relevant subset for this section
+  const ins = computeInsights(answers);
+
+  if (sectionId === 'skin') {
+    const skinTypeLabel: Record<string, string> = {
+      dry: 'Dry', oily: 'Oily', combination: 'Combination', normal: 'Normal', sensitive: 'Sensitive',
+    };
+    const acneColor: Record<string, string> = {
+      low: 'bg-green-50 text-green-700', moderate: 'bg-yellow-50 text-yellow-700', high: 'bg-red-50 text-red-700',
+    };
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Banner */}
+        <div className="bg-gradient-to-r from-rose-50 to-pink-50 px-5 py-4 border-b border-slate-100">
+          <p className="text-xs font-semibold text-rose-400 uppercase tracking-wide mb-0.5">Your Skin Profile</p>
+          <h3 className="text-xl font-bold text-slate-800">
+            {skinTypeLabel[ins.skinType] ?? ins.skinType} Skin
+            {ins.isSensitive ? ' + Sensitive' : ''}
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5 capitalize">
+            {ins.routineMaturity} routine · {ins.skincareMonthlyBudget} budget
+          </p>
+        </div>
+        <div className="p-4 space-y-2">
+          <ResultRow label="Barrier Health"  value={ins.barrierHealth}       color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Acne Risk"        value={ins.acneRisk}            color={acneColor[ins.acneRisk]} />
+          <ResultRow label="Pigmentation"     value={ins.pigmentationLevel}   color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Sensitivity"      value={ins.sensitivityLevel}    color="bg-slate-50 text-slate-700" />
+        </div>
+        {ins.primaryConcerns.length > 0 && (
+          <div className="px-4 pb-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" /> Top concerns
+            </p>
+            <TagList items={ins.primaryConcerns} color="bg-teal-50 text-teal-700" />
+          </div>
+        )}
+        {(ins.ingredientsToSeek.length > 0 || ins.ingredientsToAvoid.length > 0) && (
+          <div className="border-t border-slate-100 px-4 py-4 space-y-3">
+            {ins.ingredientsToSeek.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-green-600 mb-1.5 flex items-center gap-1.5">
+                  <Leaf className="w-3.5 h-3.5" /> Ingredients to seek
+                </p>
+                <TagList items={ins.ingredientsToSeek} color="bg-green-50 text-green-700" />
+              </div>
+            )}
+            {ins.ingredientsToAvoid.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-500 mb-1.5 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Ingredients to avoid
+                </p>
+                <TagList items={ins.ingredientsToAvoid} color="bg-red-50 text-red-600" />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (sectionId === 'biology') {
+    const stressColor: Record<string, string> = {
+      low: 'bg-green-50 text-green-700', moderate: 'bg-yellow-50 text-yellow-700',
+      high: 'bg-orange-50 text-orange-700', 'very-high': 'bg-red-50 text-red-700',
+    };
+    const tip =
+      ins.internalInflammation === 'high'
+        ? 'High internal inflammation is often visible on skin as redness, breakouts, or dullness. Focus on stress reduction and anti-inflammatory foods.'
+        : ins.stressLevel === 'high' || ins.stressLevel === 'very-high'
+        ? 'Chronic stress elevates cortisol, increasing sebum production and slowing barrier repair. Prioritise sleep and recovery.'
+        : ins.sleepQuality === 'poor' || ins.sleepQuality === 'fair'
+        ? 'Skin repairs itself during deep sleep. Even one extra hour can noticeably improve barrier function and reduce puffiness.'
+        : 'Your internal health signals look solid — your skin is likely benefiting from your lifestyle habits.';
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4 border-b border-slate-100">
+          <p className="text-xs font-semibold text-teal-500 uppercase tracking-wide mb-0.5">Internal Health Snapshot</p>
+          <h3 className="text-xl font-bold text-slate-800">Your Biology at a Glance</h3>
+        </div>
+        <div className="p-4 space-y-2">
+          <ResultRow label="Stress Level"         value={ins.stressLevel}          color={stressColor[ins.stressLevel] ?? 'bg-slate-50 text-slate-700'} />
+          <ResultRow label="Sleep Quality"         value={ins.sleepQuality}         color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Diet Quality"          value={ins.dietQuality}          color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Internal Inflammation" value={ins.internalInflammation} color={ins.internalInflammation === 'high' ? 'bg-red-50 text-red-700' : 'bg-slate-50 text-slate-700'} />
+        </div>
+        <div className="border-t border-slate-100 px-4 py-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5" /> What this means for your skin
+          </p>
+          <p className="text-sm text-slate-600 leading-relaxed">{tip}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sectionId === 'hair') {
+    const hairTypeLabel: Record<string, string> = {
+      straight: 'Straight', wavy: 'Wavy', curly: 'Curly', coily: 'Coily', unknown: 'Not answered',
+    };
+    const dmgColor: Record<string, string> = {
+      minimal: 'bg-green-50 text-green-700', slight: 'bg-green-50 text-green-700',
+      moderate: 'bg-orange-50 text-orange-700', heavy: 'bg-red-50 text-red-700',
+    };
+    if (ins.hairType === 'unknown') {
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center text-slate-400 text-sm">
+          Hair section skipped — no hair insights to show.
+        </div>
+      );
+    }
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 border-b border-slate-100">
+          <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide mb-0.5">Hair Profile</p>
+          <h3 className="text-xl font-bold text-slate-800">
+            {hairTypeLabel[ins.hairType]} Hair
+            {ins.curlPattern ? ` · ${ins.curlPattern.toUpperCase()}` : ''}
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">{ins.haircareMonthlyBudget} haircare budget</p>
+        </div>
+        <div className="p-4 space-y-2">
+          <ResultRow label="Scalp Type"    value={ins.scalpType}    color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Porosity"      value={ins.porosity}     color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Damage Level"  value={ins.damageLevel}  color={dmgColor[ins.damageLevel]} />
+        </div>
+        {ins.primaryHairConcerns.length > 0 && (
+          <div className="border-t border-slate-100 px-4 py-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" /> Primary hair concerns
+            </p>
+            <TagList items={ins.primaryHairConcerns} color="bg-amber-50 text-amber-700" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (sectionId === 'makeup') {
+    if (ins.undertone === 'unknown') {
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center text-slate-400 text-sm">
+          Makeup section skipped — no makeup insights to show.
+        </div>
+      );
+    }
+    const freqLabel: Record<string, string> = {
+      daily: 'Daily', occasional: 'Occasional', rare: 'Rarely', never: 'Never',
+    };
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 px-5 py-4 border-b border-slate-100">
+          <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide mb-0.5">Makeup Profile</p>
+          <h3 className="text-xl font-bold text-slate-800 capitalize">
+            {ins.undertone} Undertone · {ins.coveragePreference} coverage
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">{ins.makeupMonthlyBudget} budget · {freqLabel[ins.makeupFrequency] ?? ins.makeupFrequency} wear</p>
+        </div>
+        <div className="p-4 space-y-2">
+          <ResultRow label="Undertone"         value={ins.undertone}           color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Coverage Preference" value={ins.coveragePreference} color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Wears Makeup"      value={freqLabel[ins.makeupFrequency] ?? ins.makeupFrequency} color="bg-slate-50 text-slate-700" />
+          <ResultRow label="Monthly Budget"    value={ins.makeupMonthlyBudget} color="bg-slate-50 text-slate-700" />
+        </div>
+        <div className="border-t border-slate-100 px-4 py-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> What this means
+          </p>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            {ins.undertone === 'warm'
+              ? 'Warm undertones suit golden, peachy, and coral shades. Look for foundations with yellow or golden bases.'
+              : ins.undertone === 'cool'
+              ? 'Cool undertones suit pink, berry, and mauve shades. Look for foundations with pink or red bases.'
+              : 'Neutral undertones suit a wide range of shades — you can wear both warm and cool tones easily.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // ─── Results ──────────────────────────────────────────────────────────────────
@@ -829,74 +1043,102 @@ export default function SkinStory() {
             {view === 'section-done' && section && (
               <motion.div
                 key="section-done"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35 }}
-                className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full px-6 py-12 text-center"
+                className="flex-1 overflow-y-auto"
               >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-                  className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mb-6"
-                >
-                  <CheckCircle2 className="w-10 h-10 text-teal-500" />
-                </motion.div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                  {section.title} complete!
-                </h2>
-                <p className="text-sm text-slate-500 mb-2">
-                  {doneSections.size} of {QUIZ_SECTIONS.length} sections done
-                </p>
-                {user && (
-                  <Badge className="bg-teal-100 text-teal-700 border-0 mb-6">
-                    +{doneSections.size === 4 ? 100 : 10} points earned
-                  </Badge>
-                )}
+                <div className="max-w-xl mx-auto px-4 py-8 space-y-5">
 
-                {/* Progress dots */}
-                <div className="flex gap-2 mb-8">
-                  {QUIZ_SECTIONS.map(s => (
-                    <div
-                      key={s.id}
+                  {/* ── Header ────────────────────────────────────────────── */}
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
                       className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center text-lg',
-                        doneSections.has(s.id as SectionId) ? 'bg-teal-100' : 'bg-slate-100',
+                        'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg',
+                        `bg-gradient-to-br ${section.gradient}`,
                       )}
                     >
-                      {s.emoji}
+                      {section.emoji}
+                    </motion.div>
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <CheckCircle2 className="w-4 h-4 text-teal-500" />
+                      <h2 className="text-xl font-bold text-slate-800">{section.title} — done!</h2>
                     </div>
-                  ))}
-                </div>
+                    <p className="text-sm text-slate-500">
+                      {doneSections.size} of {QUIZ_SECTIONS.length} sections complete
+                    </p>
+                    {user && (
+                      <Badge className="bg-teal-100 text-teal-700 border-0 mt-2">
+                        +{doneSections.size === 4 ? 100 : 10} points earned
+                      </Badge>
+                    )}
+                  </div>
 
-                <div className="flex flex-col gap-3 w-full max-w-xs">
-                  {doneSections.size < 4 ? (
-                    <>
+                  {/* ── Section-specific result card ──────────────────────── */}
+                  <SectionResultCard
+                    sectionId={section.id}
+                    answers={answers}
+                  />
+
+                  {/* ── Progress tracker ──────────────────────────────────── */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                      Your progress
+                    </p>
+                    <div className="flex gap-2">
+                      {QUIZ_SECTIONS.map(s => (
+                        <div key={s.id} className="flex-1 text-center">
+                          <div className={cn(
+                            'w-full aspect-square rounded-xl flex items-center justify-center text-xl mb-1',
+                            doneSections.has(s.id as SectionId)
+                              ? 'bg-teal-100'
+                              : s.id === section.id
+                              ? `bg-gradient-to-br ${s.gradient} opacity-60`
+                              : 'bg-slate-100',
+                          )}>
+                            {doneSections.has(s.id as SectionId)
+                              ? <CheckCircle2 className="w-5 h-5 text-teal-500" />
+                              : s.emoji}
+                          </div>
+                          <p className="text-[10px] text-slate-500 leading-tight">{s.title.replace('Your ', '')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── CTAs ──────────────────────────────────────────────── */}
+                  <div className="flex flex-col gap-3 pb-4">
+                    {doneSections.size < 4 ? (
+                      <>
+                        <Button
+                          onClick={goToNext}
+                          className="w-full bg-teal-600 hover:bg-teal-700 text-white h-12 rounded-xl text-base font-medium gap-2"
+                        >
+                          Continue to {QUIZ_SECTIONS[currentSectionIndex + 1]?.title ?? 'next section'}
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setView('landing')}
+                          className="w-full h-10 rounded-xl text-sm"
+                        >
+                          Take a break — progress saved
+                        </Button>
+                      </>
+                    ) : (
                       <Button
-                        onClick={goToNext}
-                        className="bg-teal-600 hover:bg-teal-700 text-white h-12 rounded-xl text-base font-medium gap-2"
+                        onClick={handleViewResults}
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white h-12 rounded-xl text-base font-medium gap-2"
                       >
-                        Continue to {QUIZ_SECTIONS[currentSectionIndex + 1]?.title ?? 'next section'}
-                        <ArrowRight className="w-4 h-4" />
+                        <Sparkles className="w-4 h-4" />
+                        See my complete Skin Story
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setView('landing')}
-                        className="h-10 rounded-xl text-sm"
-                      >
-                        Take a break, save for later
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      onClick={handleViewResults}
-                      className="bg-teal-600 hover:bg-teal-700 text-white h-12 rounded-xl text-base font-medium gap-2"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      See my full Skin Story
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
