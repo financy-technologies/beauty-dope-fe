@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useTopBrands } from "@/hooks/api/useProductDetail";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +86,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
           </p>
           <div className="space-y-0.5">
             {[
-              { label: "Browse all skincare dupes", href: "/browse?category=skincare" },
+              { label: "Browse all skincare dupes", href: "/browse?category=skin" },
               { label: "Browse all makeup dupes",   href: "/browse?category=makeup" },
               { label: "Top trending dupes",        href: "/browse?sort=trending" },
               { label: "Blog & ingredient guides",  href: "/blog" },
@@ -111,14 +112,15 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
 const Header = () => {
   const [isMenuOpen,   setIsMenuOpen]   = useState(false);
   const [toolsOpen,    setToolsOpen]    = useState(false);
+  const [brandsOpen,   setBrandsOpen]   = useState(false);
   const [searchOpen,   setSearchOpen]   = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: topBrands } = useTopBrands(16);
 
   const navLinks = [
-    { name: "Skincare",  href: "/browse?category=skincare" },
+    { name: "Skincare",  href: "/browse?category=skin" },
     { name: "Makeup",    href: "/browse?category=makeup" },
-    { name: "Brands",    href: "/brands" },
     { name: "Blog",      href: "/blog" },
     { name: "Trending",  href: "/browse?sort=trending" },
   ];
@@ -155,7 +157,57 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
+            {/* Skincare + Makeup links */}
+            {navLinks.slice(0, 2).map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            {/* Brands dropdown */}
+            <DropdownMenu open={brandsOpen} onOpenChange={setBrandsOpen}>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground outline-none">
+                  Brands
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${brandsOpen ? "rotate-180" : ""}`} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56 p-2">
+                {topBrands && topBrands.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-0.5">
+                      {topBrands.slice(0, 14).map((brand) => (
+                        <DropdownMenuItem key={brand} asChild>
+                          <Link
+                            to={`/browse?q=${encodeURIComponent(brand)}`}
+                            className="text-sm px-2 py-1.5 cursor-pointer rounded"
+                          >
+                            {brand}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/brands" className="text-sm font-semibold text-primary cursor-pointer px-2 py-1.5">
+                        View all brands →
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link to="/brands" className="text-sm cursor-pointer px-2 py-1.5">Browse all brands</Link>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Remaining nav links (Blog, Trending) */}
+            {navLinks.slice(2).map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
@@ -301,6 +353,34 @@ const Header = () => {
                     {link.name}
                   </Link>
                 ))}
+
+                {/* Brands section in mobile */}
+                {topBrands && topBrands.length > 0 && (
+                  <div className="pt-2 mt-1 border-t border-border">
+                    <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                      Brands
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 px-3 py-1">
+                      {topBrands.slice(0, 10).map((brand) => (
+                        <Link
+                          key={brand}
+                          to={`/browse?q=${encodeURIComponent(brand)}`}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground hover:border-primary/30 hover:text-primary transition-colors"
+                        >
+                          {brand}
+                        </Link>
+                      ))}
+                      <Link
+                        to="/brands"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="rounded-full border border-primary/30 px-3 py-1 text-xs font-semibold text-primary transition-colors"
+                      >
+                        View all →
+                      </Link>
+                    </div>
+                  </div>
+                )}
 
                 {/* Tools section in mobile */}
                 <div className="pt-2 mt-1 border-t border-border">
