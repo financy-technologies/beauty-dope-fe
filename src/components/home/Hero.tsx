@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useSearchDupes } from "@/hooks/api/useSearch";
-import { useProductSearch } from "@/hooks/api/useProductDetail";
+import { useProductSearch, useTopBrands } from "@/hooks/api/useProductDetail";
 import type { DupeWithProducts } from "@/integrations/supabase/types";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ const TRUST_PILLS = [
   { icon: Sparkles,    label: "AI-matched" },
 ];
 
-const POPULAR_BRANDS = ["Charlotte Tilbury", "Drunk Elephant", "La Mer", "Tom Ford", "Tatcha", "NARS"];
+const FALLBACK_BRANDS = ["Charlotte Tilbury", "Drunk Elephant", "La Mer", "Tom Ford", "Tatcha", "NARS"];
 
 const CATEGORIES = [
   { label: "Skincare",  href: "/browse?category=skincare", emoji: "🧴" },
@@ -166,6 +166,8 @@ function SuggestionsDropdown({
   productResults,
   isLoading,
   focusedIndex,
+  searchMode,
+  popularBrands,
   onSelectDupe,
   onSelectProduct,
   onBrandClick,
@@ -174,7 +176,9 @@ function SuggestionsDropdown({
   dupeResults: DupeWithProducts[] | undefined;
   productResults: { id: string; name: string; brand: string; price: number; imageUrl?: string; normalizedPriceInr?: number; currency?: string }[] | undefined;
   isLoading: boolean;
+  popularBrands: string[];
   focusedIndex: number;
+  searchMode: "dupes" | "products";
   onSelectDupe: (id: string) => void;
   onSelectProduct: (id: string) => void;
   onBrandClick: (brand: string) => void;
@@ -182,7 +186,8 @@ function SuggestionsDropdown({
   const navigate = useNavigate();
   const trimmed = query.trim();
   const isSearching = trimmed.length >= 2;
-  const hasDupes = (dupeResults?.length ?? 0) > 0;
+  // In products mode, prioritize product results; in dupes mode prioritize dupe results
+  const hasDupes = searchMode !== "products" && (dupeResults?.length ?? 0) > 0;
   const hasProducts = (productResults?.length ?? 0) > 0;
   const hasAny = hasDupes || hasProducts;
 
@@ -203,7 +208,7 @@ function SuggestionsDropdown({
               <TrendingUp className="h-3 w-3" /> Popular brands
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {POPULAR_BRANDS.map((b) => (
+              {popularBrands.map((b) => (
                 <Pill key={b} onClick={() => onBrandClick(b)}>{b}</Pill>
               ))}
             </div>
@@ -290,7 +295,11 @@ function SuggestionsDropdown({
         <div className="border-t border-border px-4 py-2.5">
           <button
             type="button"
-            onClick={() => navigate(`/browse?q=${encodeURIComponent(trimmed)}`)}
+            onClick={() => navigate(
+              searchMode === "products"
+                ? `/browse?mode=products&q=${encodeURIComponent(trimmed)}`
+                : `/browse?q=${encodeURIComponent(trimmed)}`
+            )}
             className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2 py-0.5"
           >
             View all results for "{trimmed}"
@@ -325,10 +334,14 @@ const Hero = () => {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen]             = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [searchMode, setSearchMode]     = useState<"dupes" | "products">("dupes");
   const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLInputElement>(null);
   const navigate     = useNavigate();
+
+  const { data: topBrandsData } = useTopBrands(12);
+  const popularBrands = (topBrandsData && topBrandsData.length > 0) ? topBrandsData : FALLBACK_BRANDS;
 
   const { data: dupeResults, isLoading: dupesLoading } = useSearchDupes(debouncedQuery);
   const { data: productResults, isLoading: productsLoading } = useProductSearch(debouncedQuery);
@@ -398,7 +411,11 @@ const Hero = () => {
   const handleSubmit = () => {
     setIsOpen(false);
     const q = searchQuery.trim();
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : "/browse");
+    if (searchMode === "products") {
+      navigate(q ? `/browse?mode=products&q=${encodeURIComponent(q)}` : "/browse?mode=products");
+    } else {
+      navigate(q ? `/browse?q=${encodeURIComponent(q)}` : "/browse");
+    }
   };
 
   const handleClear = () => {
@@ -464,6 +481,34 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mx-auto mt-10 max-w-2xl"
           >
+            {/* Mode toggle */}
+            <div className="mb-3 inline-flex items-center rounded-full border border-border bg-background/80 p-1 shadow-soft backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => { setSearchMode("dupes"); inputRef.current?.focus(); }}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+                  searchMode === "dupes"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Find Dupes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSearchMode("products"); inputRef.current?.focus(); }}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+                  searchMode === "products"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Package className="h-3.5 w-3.5" />
+                Browse Products
+              </button>
+            </div>
+
             {/* Input row */}
             <div className="flex flex-col gap-3 sm:flex-row">
               {/* Input + dropdown wrapper */}
@@ -474,7 +519,7 @@ const Hero = () => {
                 <Input
                   ref={inputRef}
                   type="text"
-                  placeholder="Search a product or brand, e.g. La Mer…"
+                  placeholder={searchMode === "dupes" ? "Search a luxury product to find its dupe…" : "Search a product or brand, e.g. La Mer…"}
                   value={searchQuery}
                   onChange={(e) => handleChange(e.target.value)}
                   onFocus={() => setIsOpen(true)}
@@ -506,6 +551,8 @@ const Hero = () => {
                       productResults={productResults as any}
                       isLoading={isLoading}
                       focusedIndex={focusedIndex}
+                      searchMode={searchMode}
+                      popularBrands={popularBrands}
                       onSelectDupe={handleSelectDupe}
                       onSelectProduct={handleSelectProduct}
                       onBrandClick={handleBrandClick}
@@ -521,7 +568,7 @@ const Hero = () => {
                 onClick={handleSubmit}
                 className="h-14 rounded-xl px-8 font-semibold shadow-gold tracking-wide gap-2"
               >
-                Find Dupes
+                {searchMode === "dupes" ? "Find Dupes" : "Browse Products"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -555,7 +602,7 @@ const Hero = () => {
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Popular
             </span>
-            {POPULAR_BRANDS.map((brand) => (
+            {popularBrands.map((brand) => (
               <button
                 key={brand}
                 type="button"

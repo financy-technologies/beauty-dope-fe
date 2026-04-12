@@ -135,6 +135,14 @@ export function useProductDetail(productId: string | undefined) {
   });
 }
 
+export function useTopBrands(limit = 20) {
+  return useQuery({
+    queryKey: ['top-brands', limit],
+    queryFn: () => api.get<string[]>(`/products/brands?limit=${limit}`),
+    staleTime: 1000 * 60 * 10, // 10 min — brands don't change often
+  });
+}
+
 export function useProductSearch(query: string) {
   return useQuery({
     queryKey: ['product-search', query],
