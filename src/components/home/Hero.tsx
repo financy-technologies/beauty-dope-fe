@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Search, Sparkles, ShieldCheck, Zap, X, ArrowRight, TrendingUp, Layers } from "lucide-react";
+import { Search, Sparkles, ShieldCheck, Zap, X, ArrowRight, TrendingUp, Layers, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useSearchDupes } from "@/hooks/api/useSearch";
+import { useProductSearch } from "@/hooks/api/useProductDetail";
 import type { DupeWithProducts } from "@/integrations/supabase/types";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -124,25 +125,66 @@ function SkeletonRow() {
   );
 }
 
+// ─── Product suggestion item ───────────────────────────────────────────────────
+function ProductSuggestionItem({
+  product,
+  onClick,
+}: {
+  product: { id: string; name: string; brand: string; price: number; imageUrl?: string; normalizedPriceInr?: number; currency?: string };
+  onClick: () => void;
+}) {
+  const price = product.currency === 'USD'
+    ? `$${product.price.toLocaleString()}`
+    : `₹${Math.round(product.normalizedPriceInr ?? product.price).toLocaleString('en-IN')}`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60"
+    >
+      <div className="h-9 w-9 rounded-lg bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
+        ) : (
+          <Package className="h-4 w-4 text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate leading-tight">{product.brand} {product.name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{price}</p>
+      </div>
+      <span className="text-[10px] font-semibold rounded-full bg-secondary text-secondary-foreground px-2 py-0.5 shrink-0">Product</span>
+    </button>
+  );
+}
+
 // ─── Suggestions dropdown ──────────────────────────────────────────────────────
 function SuggestionsDropdown({
   query,
-  results,
+  dupeResults,
+  productResults,
   isLoading,
   focusedIndex,
-  onSelect,
+  onSelectDupe,
+  onSelectProduct,
   onBrandClick,
 }: {
   query: string;
-  results: DupeWithProducts[] | undefined;
+  dupeResults: DupeWithProducts[] | undefined;
+  productResults: { id: string; name: string; brand: string; price: number; imageUrl?: string; normalizedPriceInr?: number; currency?: string }[] | undefined;
   isLoading: boolean;
   focusedIndex: number;
-  onSelect: (id: string) => void;
+  onSelectDupe: (id: string) => void;
+  onSelectProduct: (id: string) => void;
   onBrandClick: (brand: string) => void;
 }) {
   const navigate = useNavigate();
   const trimmed = query.trim();
   const isSearching = trimmed.length >= 2;
+  const hasDupes = (dupeResults?.length ?? 0) > 0;
+  const hasProducts = (productResults?.length ?? 0) > 0;
+  const hasAny = hasDupes || hasProducts;
 
   return (
     <motion.div
@@ -198,43 +240,69 @@ function SuggestionsDropdown({
       )}
 
       {/* ── Results ──────────────────────────────────────────── */}
-      {isSearching && !isLoading && results && results.length > 0 && (
-        <>
-          <div className="border-b border-border px-4 py-2.5 flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {results.length} result{results.length !== 1 ? "s" : ""} for "{trimmed}"
-            </p>
-          </div>
+      {isSearching && !isLoading && hasAny && (
+        <div className="max-h-96 overflow-y-auto">
+          {/* Dupes section */}
+          {hasDupes && (
+            <>
+              <div className="px-4 py-2 bg-muted/30 border-b border-border">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <Zap className="h-3 w-3 text-primary" /> Dupe matches
+                </p>
+              </div>
+              <div className="divide-y divide-border/60">
+                {dupeResults!.slice(0, 4).map((dupe, i) => (
+                  <SuggestionItem
+                    key={dupe.id}
+                    dupe={dupe}
+                    isFocused={focusedIndex === i}
+                    onClick={() => onSelectDupe(dupe.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
-          <div className="divide-y divide-border/60 max-h-72 overflow-y-auto">
-            {results.slice(0, 6).map((dupe, i) => (
-              <SuggestionItem
-                key={dupe.id}
-                dupe={dupe}
-                isFocused={focusedIndex === i}
-                onClick={() => onSelect(dupe.id)}
-              />
-            ))}
-          </div>
+          {/* Products section */}
+          {hasProducts && (
+            <>
+              <div className="px-4 py-2 bg-muted/30 border-t border-b border-border">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <Package className="h-3 w-3 text-primary" /> Individual products
+                </p>
+              </div>
+              <div className="divide-y divide-border/60">
+                {productResults!.slice(0, 4).map((product) => (
+                  <ProductSuggestionItem
+                    key={product.id}
+                    product={product}
+                    onClick={() => onSelectProduct(product.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-          {/* Footer CTA */}
-          <div className="border-t border-border px-4 py-2.5">
-            <button
-              type="button"
-              onClick={() => navigate(`/browse?q=${encodeURIComponent(trimmed)}`)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2 py-0.5"
-            >
-              View all {results.length > 6 ? `${results.length}` : ""} results
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </>
+      {/* Footer CTA when we have results */}
+      {isSearching && !isLoading && hasAny && (
+        <div className="border-t border-border px-4 py-2.5">
+          <button
+            type="button"
+            onClick={() => navigate(`/browse?q=${encodeURIComponent(trimmed)}`)}
+            className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2 py-0.5"
+          >
+            View all results for "{trimmed}"
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
 
       {/* ── No results ───────────────────────────────────────── */}
-      {isSearching && !isLoading && results && results.length === 0 && (
+      {isSearching && !isLoading && !hasAny && (
         <div className="px-4 py-8 text-center">
-          <p className="text-sm font-medium text-foreground mb-1">No dupes found for "{trimmed}"</p>
+          <p className="text-sm font-medium text-foreground mb-1">No results found for "{trimmed}"</p>
           <p className="text-xs text-muted-foreground mb-4">
             Try a different brand name or browse all categories.
           </p>
@@ -243,7 +311,7 @@ function SuggestionsDropdown({
             onClick={() => navigate("/browse")}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2"
           >
-            Browse all dupes <ArrowRight className="h-3.5 w-3.5" />
+            Browse all products <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
@@ -262,7 +330,9 @@ const Hero = () => {
   const inputRef     = useRef<HTMLInputElement>(null);
   const navigate     = useNavigate();
 
-  const { data: results, isLoading } = useSearchDupes(debouncedQuery);
+  const { data: dupeResults, isLoading: dupesLoading } = useSearchDupes(debouncedQuery);
+  const { data: productResults, isLoading: productsLoading } = useProductSearch(debouncedQuery);
+  const isLoading = dupesLoading || productsLoading;
 
   // Debounce the API query (300ms)
   const handleChange = (value: string) => {
@@ -288,7 +358,7 @@ const Hero = () => {
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
-    const count = Math.min(results?.length ?? 0, 6);
+    const count = Math.min((dupeResults?.length ?? 0) + (productResults?.length ?? 0), 8);
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setFocusedIndex((i) => Math.min(i + 1, count - 1));
@@ -300,8 +370,8 @@ const Hero = () => {
       inputRef.current?.blur();
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (focusedIndex >= 0 && results?.[focusedIndex]) {
-        handleSelectDupe(results[focusedIndex].id);
+      if (focusedIndex >= 0 && dupeResults?.[focusedIndex]) {
+        handleSelectDupe(dupeResults[focusedIndex].id);
       } else {
         handleSubmit();
       }
@@ -311,6 +381,11 @@ const Hero = () => {
   const handleSelectDupe = useCallback((id: string) => {
     setIsOpen(false);
     navigate(`/dupe/${id}`);
+  }, [navigate]);
+
+  const handleSelectProduct = useCallback((id: string) => {
+    setIsOpen(false);
+    navigate(`/product/${id}`);
   }, [navigate]);
 
   const handleBrandClick = useCallback((brand: string) => {
@@ -427,10 +502,12 @@ const Hero = () => {
                   {isOpen && (
                     <SuggestionsDropdown
                       query={searchQuery}
-                      results={results}
+                      dupeResults={dupeResults}
+                      productResults={productResults as any}
                       isLoading={isLoading}
                       focusedIndex={focusedIndex}
-                      onSelect={handleSelectDupe}
+                      onSelectDupe={handleSelectDupe}
+                      onSelectProduct={handleSelectProduct}
                       onBrandClick={handleBrandClick}
                     />
                   )}

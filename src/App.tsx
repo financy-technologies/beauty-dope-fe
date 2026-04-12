@@ -31,6 +31,7 @@ import Disclaimer from "./pages/Disclaimer";
 import Community from "./pages/Community";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import ProductDetail from "./pages/ProductDetail";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/dupe/:id" element={<DupeDetail />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/dupes-finder" element={<DupesFinderAdvanced />} />
             <Route path="/dupes" element={<DupesFinderAdvanced />} />
             <Route path="/signup" element={<Auth />} />
