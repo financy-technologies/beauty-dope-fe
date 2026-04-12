@@ -304,27 +304,51 @@ function StickyNav({ activeSection }: { activeSection: string }) {
   );
 }
 
-// ─── Zone 7 — Ethics card ──────────────────────────────────────────────────────
+// ─── Zone 8 — Ethics card ──────────────────────────────────────────────────────
 
-function EthicsRow({ label, value, iconTrue, iconFalse }: {
-  label: string; value: boolean | null; iconTrue?: React.ReactNode; iconFalse?: React.ReactNode;
-}) {
-  if (value === null) {
-    return (
-      <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-        <span className="text-sm text-foreground">{label}</span>
-        <span className="text-sm text-muted-foreground italic">Not certified</span>
-      </div>
-    );
-  }
+const ETHICS_META: Record<string, { icon: React.ReactNode; desc: string }> = {
+  'Fragrance Free':    { icon: <Leaf className="h-5 w-5" />,       desc: 'No synthetic fragrance or parfum' },
+  'Alcohol Free':      { icon: <Droplets className="h-5 w-5" />,   desc: 'No drying denatured alcohol' },
+  'Paraben Free':      { icon: <ShieldCheck className="h-5 w-5" />,desc: 'No parabens as preservatives' },
+  'Silicone Free':     { icon: <Sparkles className="h-5 w-5" />,   desc: 'No occlusive silicones' },
+  'Fungal Acne Safe':  { icon: <Award className="h-5 w-5" />,      desc: 'Safe for malassezia-prone skin' },
+  'Pregnancy Safe':    { icon: <Users className="h-5 w-5" />,      desc: 'No pregnancy-restricted ingredients' },
+};
+
+function EthicsCard({ label, value }: { label: string; value: boolean | null }) {
+  const meta = ETHICS_META[label];
+  const isTrue = value === true;
+  const isFalse = value === false;
+  const isUnknown = value === null;
+
   return (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-      <span className="text-sm text-foreground">{label}</span>
-      <div className="flex items-center gap-1.5">
-        {value
-          ? <><CheckCircle2 className="h-4 w-4 text-emerald-500" /><span className="text-sm text-emerald-600 font-medium">Yes</span></>
-          : <><XCircle className="h-4 w-4 text-red-400" /><span className="text-sm text-red-600 font-medium">No</span></>
-        }
+    <div className={cn(
+      'relative flex flex-col gap-3 rounded-2xl border p-4 transition-all',
+      isTrue    ? 'border-emerald-200 bg-emerald-50/60'  : '',
+      isFalse   ? 'border-red-200 bg-red-50/40'          : '',
+      isUnknown ? 'border-border bg-muted/30'             : '',
+    )}>
+      {/* Status badge top-right */}
+      <div className="absolute top-3 right-3">
+        {isTrue    && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"><CheckCircle2 className="h-3 w-3" />Yes</span>}
+        {isFalse   && <span className="inline-flex items-center gap-1 rounded-full bg-red-100 border border-red-200 px-2 py-0.5 text-[11px] font-semibold text-red-700"><XCircle className="h-3 w-3" />No</span>}
+        {isUnknown && <span className="inline-flex items-center gap-1 rounded-full bg-muted border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Unknown</span>}
+      </div>
+
+      {/* Icon */}
+      <div className={cn(
+        'flex h-9 w-9 items-center justify-center rounded-xl',
+        isTrue    ? 'bg-emerald-100 text-emerald-600' : '',
+        isFalse   ? 'bg-red-100 text-red-500'         : '',
+        isUnknown ? 'bg-muted text-muted-foreground'  : '',
+      )}>
+        {meta?.icon}
+      </div>
+
+      {/* Label + desc */}
+      <div>
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        {meta?.desc && <p className="text-xs text-muted-foreground mt-0.5 leading-snug pr-12">{meta.desc}</p>}
       </div>
     </div>
   );
@@ -907,33 +931,35 @@ const ProductDetail = () => {
         {/* ───────────────────────────────── ZONE 8 — ETHICS ──── */}
         <section id="ethics" className="py-12 bg-secondary/20">
           <div className="container px-4 md:px-6">
-            <div className="max-w-2xl">
-              <h2 className="font-display text-2xl font-semibold text-foreground mb-2">Ethics & Transparency</h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                These flags are derived from ingredient analysis. Not all ethical brands carry official certifications —
-                smaller brands may lack resources for formal certification. Here's what we know about this product.
+            <div className="mb-6">
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-1">Ethics & Transparency</h2>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Flags derived from ingredient analysis. Not all brands carry official certifications — here's what the formula tells us.
               </p>
+            </div>
 
-              <div className="bg-card rounded-2xl border border-border divide-y divide-border overflow-hidden">
-                <EthicsRow label="Fragrance Free" value={product.ethics.fragranceFree} />
-                <EthicsRow label="Alcohol Free" value={product.ethics.alcoholFree} />
-                <EthicsRow label="Paraben Free" value={product.ethics.parabenFree} />
-                <EthicsRow label="Silicone Free" value={product.ethics.siliconeFree} />
-                <EthicsRow label="Fungal Acne Safe" value={product.ingredientBreakdown?.fungalAcneSafe ?? null} />
-                <EthicsRow label="Pregnancy Safe" value={product.ingredientBreakdown?.pregnancySafe ?? null} />
-                {product.platform && (
-                  <div className="flex items-center justify-between py-3 px-4 last:border-0">
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <Globe className="h-4 w-4 text-muted-foreground" /> Available on
-                    </div>
-                    <span className="text-sm font-medium text-foreground capitalize">{product.platform}</span>
-                  </div>
-                )}
-              </div>
+            {/* Ethics cards grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+              <EthicsCard label="Fragrance Free"   value={product.ethics.fragranceFree} />
+              <EthicsCard label="Alcohol Free"     value={product.ethics.alcoholFree} />
+              <EthicsCard label="Paraben Free"     value={product.ethics.parabenFree} />
+              <EthicsCard label="Silicone Free"    value={product.ethics.siliconeFree} />
+              <EthicsCard label="Fungal Acne Safe" value={product.ingredientBreakdown?.fungalAcneSafe ?? null} />
+              <EthicsCard label="Pregnancy Safe"   value={product.ingredientBreakdown?.pregnancySafe ?? null} />
+            </div>
 
-              <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+            {/* Available on + disclaimer row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              {product.platform && (
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 self-start">
+                  <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground">Available on</span>
+                  <span className="text-sm font-semibold text-foreground capitalize">{product.platform}</span>
+                </div>
+              )}
+              <div className="flex items-start gap-2 text-xs text-muted-foreground max-w-xl">
                 <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <p>Ethics flags are automatically derived from the ingredient list. Manual verification by SkinEvora editors is ongoing. Always read the product label for the most accurate information.</p>
+                <p>Ethics flags are automatically derived from the ingredient list. Manual verification by Skinevora editors is ongoing. Always read the product label for the most accurate information.</p>
               </div>
             </div>
           </div>
