@@ -308,7 +308,7 @@ function SuggestionsDropdown({
           </p>
           <button
             type="button"
-            onClick={() => navigate("/browse")}
+            onClick={() => navigate("/browse?mode=products")}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2"
           >
             Browse all products <ArrowRight className="h-3.5 w-3.5" />

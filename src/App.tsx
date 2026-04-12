@@ -17,6 +17,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
+import ScrollToTop from "./components/ScrollToTop";
 import IngredientAnalyzer from "./pages/IngredientAnalyzer";
 import CompareProducts from "./pages/CompareProducts";
 import IngredientsDatabase from "./pages/IngredientsDatabase";
@@ -44,6 +45,7 @@ const App = () => (
         <Sonner />
         <CookieBanner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />

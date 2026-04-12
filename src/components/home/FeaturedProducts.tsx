@@ -103,7 +103,7 @@ const FeaturedProducts = () => {
             </p>
           </div>
           <Link
-            to="/browse"
+            to="/browse?mode=products"
             className="text-sm font-medium text-primary hover:text-gold-dark transition-colors flex items-center gap-2 shrink-0"
           >
             Browse all products
@@ -151,7 +151,7 @@ const FeaturedProducts = () => {
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <Link
-            to="/browse"
+            to="/browse?mode=products"
             className={cn(
               "inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-6 py-3",
               "text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"

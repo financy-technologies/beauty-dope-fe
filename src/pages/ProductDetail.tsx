@@ -16,7 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useProductDetail, type ParsedIngredient, type DupeForProduct } from "@/hooks/api/useProductDetail";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,18 +91,24 @@ function ScoreCircle({ score, label }: { score: number; label: string }) {
   );
 }
 
-function IngredientRow({ ing, defaultOpen = false }: { ing: ParsedIngredient; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
+function IngredientRow({ ing }: { ing: ParsedIngredient }) {
+  const [open, setOpen] = useState(false);
+  // Defensive: skip rows with no usable name
+  const displayName = ing.name || ing.canonicalName || '';
+  if (!displayName) return null;
+
   const evidenceStr = (ing.effects ?? []).length > 0 ? 'promising' : 'limited';
+
   return (
-    <div className="border-b border-border last:border-0">
+    <div className="border-b border-border/60 last:border-0">
+      {/* Row header — always visible */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/40 transition-colors gap-3"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors gap-3"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-sm font-medium text-foreground capitalize truncate">{ing.name}</span>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-sm font-medium text-foreground capitalize truncate">{displayName}</span>
           {(ing.comedogenicity ?? 0) >= 3 && (
             <span className="shrink-0 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5">
               Watch
@@ -110,62 +116,69 @@ function IngredientRow({ ing, defaultOpen = false }: { ing: ParsedIngredient; de
           )}
           {ing.fungalAcneSafe === false && (
             <span className="shrink-0 rounded-full bg-red-100 text-red-700 text-[10px] font-semibold px-1.5 py-0.5">
-              FA
+              Not FA Safe
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {(ing.effects ?? []).slice(0, 2).map((e) => (
             <span key={e} className="hidden sm:inline-block rounded-full bg-primary/10 text-primary text-[10px] font-medium px-2 py-0.5 capitalize">
               {e.replace(/-/g, ' ')}
             </span>
           ))}
-          {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          {open
+            ? <ChevronUp className="h-4 w-4 text-muted-foreground ml-1" />
+            : <ChevronDown className="h-4 w-4 text-muted-foreground ml-1" />}
         </div>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-1 bg-muted/20 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              {ing.canonicalName && (
+      {/* Expanded detail — pure CSS, no Framer needed (avoids nested height:auto conflict) */}
+      {open && (
+        <div className="px-4 pb-4 pt-1 bg-muted/20 border-t border-border/40">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            {ing.canonicalName && ing.canonicalName !== displayName && (
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">INCI Name</p>
+                <p className="text-foreground/80 capitalize">{ing.canonicalName}</p>
+              </div>
+            )}
+            {ing.description && (
+              <div className="sm:col-span-2">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">What it does</p>
+                <p className="text-foreground/80 leading-relaxed">{ing.description}</p>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Evidence</p>
+                <span className={cn('rounded-full text-[11px] font-semibold px-2.5 py-1 capitalize', EVIDENCE_STYLES[evidenceStr] ?? EVIDENCE_STYLES.limited)}>
+                  {evidenceStr.charAt(0).toUpperCase() + evidenceStr.slice(1)}
+                </span>
+              </div>
+              {ing.comedogenicity !== undefined && (
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">INCI Name</p>
-                  <p className="text-foreground/80 capitalize">{ing.canonicalName}</p>
-                </div>
-              )}
-              {ing.description && (
-                <div className="sm:col-span-2">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">What it does</p>
-                  <p className="text-foreground/80">{ing.description}</p>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Evidence</p>
-                  <span className={cn('rounded-full text-[11px] font-semibold px-2.5 py-1 capitalize', EVIDENCE_STYLES[evidenceStr] ?? EVIDENCE_STYLES.limited)}>
-                    {evidenceStr.charAt(0).toUpperCase() + evidenceStr.slice(1)}
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Comedogenicity</p>
+                  <span className={cn('rounded-full text-[11px] font-semibold px-2.5 py-1',
+                    ing.comedogenicity >= 3 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')}>
+                    {ing.comedogenicity}/5
                   </span>
                 </div>
-                {ing.comedogenicity !== undefined && (
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Comedogenicity</p>
-                    <span className={cn('rounded-full text-[11px] font-semibold px-2.5 py-1', ing.comedogenicity >= 3 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')}>
-                      {ing.comedogenicity}/5
-                    </span>
-                  </div>
-                )}
-              </div>
+              )}
+              {ing.skinTypeScores && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Best for</p>
+                  <span className="text-xs text-foreground/70 capitalize">
+                    {Object.entries(ing.skinTypeScores)
+                      .filter(([, v]) => (v as number) >= 70)
+                      .map(([k]) => k)
+                      .join(', ') || 'All skin types'}
+                  </span>
+                </div>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -368,7 +381,7 @@ const ProductDetail = () => {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <p className="text-xl font-semibold text-foreground">Product not found</p>
-            <Link to="/browse" className="text-primary underline underline-offset-4">Browse all products</Link>
+            <Link to="/browse?mode=products" className="text-primary underline underline-offset-4">Browse all products</Link>
           </div>
         </main>
         <Footer />
@@ -711,23 +724,13 @@ const ProductDetail = () => {
                       {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                     </button>
 
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="divide-y divide-border/60">
-                            {items.map((ing: ParsedIngredient, i: number) => (
-                              <IngredientRow key={ing.name + i} ing={ing} />
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {isOpen && (
+                      <div className="divide-y divide-border/60 bg-background">
+                        {items.map((ing: ParsedIngredient, i: number) => (
+                          <IngredientRow key={(ing.name || ing.canonicalName || '') + i} ing={ing} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1005,7 +1008,7 @@ const ProductDetail = () => {
                   to={`/browse?q=${encodeURIComponent(product.brand)}`}
                   className="inline-flex items-center gap-2 text-sm font-medium text-primary border border-primary/30 rounded-xl px-4 py-2.5 hover:bg-primary/5 transition-colors"
                 >
-                  Browse all {product.brand} products
+                  Browse all {product.brand} dupes & products
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
