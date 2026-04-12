@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Search, X, Loader2, Package, ArrowRight, Layers } from "lucide-react";
 import SEO from "@/components/SEO";
 import { cn } from "@/lib/utils";
-import { Link as RouterLink } from "react-router-dom";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -29,7 +28,7 @@ const SORT_OPTIONS = [
 const PAGE_SIZE_DUPES    = 12;
 const PAGE_SIZE_PRODUCTS = 16;
 
-// ─── Product card (for products mode) ─────────────────────────────────────────
+// ─── Product types ─────────────────────────────────────────────────────────────
 
 interface ProductItem {
   id: string;
@@ -48,6 +47,8 @@ function formatPrice(price: number, currency?: string, normalizedInr?: number): 
   const inr = normalizedInr ?? price;
   return `₹${Math.round(inr).toLocaleString('en-IN')}`;
 }
+
+// ─── Product card ──────────────────────────────────────────────────────────────
 
 function ProductCard({ product }: { product: ProductItem }) {
   return (
@@ -90,8 +91,6 @@ function ProductCard({ product }: { product: ProductItem }) {
   );
 }
 
-// ─── Product skeleton ──────────────────────────────────────────────────────────
-
 function ProductSkeleton() {
   return (
     <div className="space-y-3">
@@ -103,19 +102,25 @@ function ProductSkeleton() {
   );
 }
 
-// ─── Hooks ─────────────────────────────────────────────────────────────────────
+// ─── Products query hook ───────────────────────────────────────────────────────
 
-function useAllProducts(options: { search?: string; limit?: number; offset?: number; category?: string }) {
-  const { search = '', limit = PAGE_SIZE_PRODUCTS, offset = 0, category } = options;
+function useAllProducts(options: {
+  search?: string;
+  limit?: number;
+  category?: string;
+  enabled: boolean;
+}) {
+  const { search = '', limit = PAGE_SIZE_PRODUCTS, category, enabled } = options;
   return useQuery<ProductItem[]>({
-    queryKey: ['browse-products', { search, limit, offset, category }],
+    queryKey: ['browse-products', { search, limit, category }],
     queryFn: async () => {
-      const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+      const params = new URLSearchParams({ limit: String(limit) });
       if (search.length >= 2) params.set('q', search);
       if (category) params.set('category', category);
       const res = await api.get<ProductItem[]>(`/products?${params}`);
       return Array.isArray(res) ? res : [];
     },
+    enabled,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -125,84 +130,54 @@ function useAllProducts(options: { search?: string; limit?: number; offset?: num
 const Browse = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const mode            = (searchParams.get("mode") as 'dupes' | 'products') || 'dupes';
-  const categoryParam   = searchParams.get("category")   || undefined;
+  const mode             = (searchParams.get("mode") as 'dupes' | 'products') || 'dupes';
+  const categoryParam    = searchParams.get("category")    || undefined;
   const subcategoryParam = searchParams.get("subcategory") || undefined;
-  const sortParam       = (searchParams.get("sort") as any) || "similarity";
+  const sortParam        = (searchParams.get("sort") as any) || "similarity";
 
   const initialQuery = searchParams.get("q") || "";
-  const [searchQuery,   setSearchQuery]   = useState(initialQuery);
+  const [searchQuery,    setSearchQuery]    = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef    = useRef<HTMLInputElement>(null);
 
-  // Pagination state — reset when mode/category/sort changes
-  const [dupePage,    setDupePage]    = useState(0);
-  const [productPage, setProductPage] = useState(0);
-  const [dupeItems,   setDupeItems]   = useState<any[]>([]);
-  const [productItems, setProductItems] = useState<ProductItem[]>([]);
+  // Simple limit-growth for "Load More" — no accumulator state needed
+  const [dupeLimit,    setDupeLimit]    = useState(PAGE_SIZE_DUPES);
+  const [productLimit, setProductLimit] = useState(PAGE_SIZE_PRODUCTS);
 
   const { data: categories } = useCategories();
 
-  // ── Dupes data ──
+  // ── Dupes ──────────────────────────────────────────────────────────────────
   const { data: dupes, isLoading: dupesLoading } = useDupes({
     category:    categoryParam,
     subcategory: subcategoryParam,
     sort:        sortParam,
-    limit:       PAGE_SIZE_DUPES,
-    offset:      dupePage * PAGE_SIZE_DUPES,
+    limit:       dupeLimit,
+    offset:      0,                 // single growing window, no offset needed
   });
 
   const { data: searchResults, isLoading: isSearching } = useSearchDupes(debouncedQuery);
 
-  // ── Products data ──
+  // ── Products ───────────────────────────────────────────────────────────────
   const { data: products, isLoading: productsLoading } = useAllProducts({
     search:   debouncedQuery,
-    limit:    PAGE_SIZE_PRODUCTS,
-    offset:   productPage * PAGE_SIZE_PRODUCTS,
+    limit:    productLimit,
     category: categoryParam,
+    enabled:  mode === 'products',   // only fetch when in products mode
   });
 
-  // Accumulate pages for "Load More"
+  // Reset limits when filters / mode change so we don't carry over a big limit
   useEffect(() => {
-    if (dupes && !debouncedQuery) {
-      if (dupePage === 0) {
-        setDupeItems(dupes);
-      } else {
-        setDupeItems((prev) => {
-          const ids = new Set(prev.map((d) => d.id));
-          return [...prev, ...dupes.filter((d) => !ids.has(d.id))];
-        });
-      }
-    }
-  }, [dupes, dupePage, debouncedQuery]);
-
-  useEffect(() => {
-    if (products) {
-      if (productPage === 0) {
-        setProductItems(products);
-      } else {
-        setProductItems((prev) => {
-          const ids = new Set(prev.map((p) => p.id));
-          return [...prev, ...products.filter((p) => !ids.has(p.id))];
-        });
-      }
-    }
-  }, [products, productPage]);
-
-  // Reset pages when filters change
-  useEffect(() => {
-    setDupePage(0);
-    setDupeItems([]);
+    setDupeLimit(PAGE_SIZE_DUPES);
   }, [categoryParam, subcategoryParam, sortParam, mode]);
 
   useEffect(() => {
-    setProductPage(0);
-    setProductItems([]);
+    setProductLimit(PAGE_SIZE_PRODUCTS);
   }, [categoryParam, debouncedQuery, mode]);
 
-  const displayDupes    = debouncedQuery.length >= 2 ? (searchResults ?? []) : dupeItems;
-  const displayProducts = productItems;
+  // Derived display data — read directly from query results, no accumulator
+  const displayDupes    = debouncedQuery.length >= 2 ? (searchResults ?? []) : (dupes ?? []);
+  const displayProducts = products ?? [];
 
   const loading = mode === 'dupes'
     ? (debouncedQuery.length >= 2 ? isSearching : dupesLoading)
@@ -210,7 +185,7 @@ const Browse = () => {
 
   const isPending = searchQuery !== debouncedQuery && searchQuery.length >= 2;
 
-  const activeCategory = categories?.find((c) => c.slug === categoryParam);
+  const activeCategory     = categories?.find((c) => c.slug === categoryParam);
   const subcategoryOptions = activeCategory?.subcategories ?? [];
 
   const setParam = (key: string, value: string | undefined) => {
@@ -222,18 +197,14 @@ const Browse = () => {
 
   const setMode = (m: 'dupes' | 'products') => {
     const next = new URLSearchParams(searchParams);
-    next.set('mode', m);
-    // Clear mode-specific params when switching
+    if (m === 'dupes') next.delete('mode');       // default, keep URL clean
+    else next.set('mode', m);
     next.delete('sort');
     next.delete('subcategory');
-    setSearchParams(next);
-    setDupePage(0);
-    setProductPage(0);
-    setDupeItems([]);
-    setProductItems([]);
+    setSearchParams(next, { replace: true });
   };
 
-  // Sync search with URL
+  // Sync search state when URL changes externally (e.g. back button)
   useEffect(() => {
     const q = searchParams.get("q") || "";
     setSearchQuery(q);
@@ -242,10 +213,6 @@ const Browse = () => {
 
   const handleChange = (value: string) => {
     setSearchQuery(value);
-    setDupePage(0);
-    setProductPage(0);
-    setDupeItems([]);
-    setProductItems([]);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!value) {
       setDebouncedQuery("");
@@ -262,10 +229,6 @@ const Browse = () => {
     setSearchQuery("");
     setDebouncedQuery("");
     setParam("q", undefined);
-    setDupePage(0);
-    setProductPage(0);
-    setDupeItems([]);
-    setProductItems([]);
     inputRef.current?.focus();
   };
 
@@ -282,11 +245,13 @@ const Browse = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const dupeHasMore    = !debouncedQuery && (dupes?.length ?? 0) === PAGE_SIZE_DUPES;
-  const productHasMore = (products?.length ?? 0) === PAGE_SIZE_PRODUCTS;
+  const dupeHasMore    = !debouncedQuery && (dupes?.length ?? 0) >= dupeLimit;
+  const productHasMore = (products?.length ?? 0) >= productLimit;
 
   const pageTitle = mode === 'products'
-    ? (categoryParam ? `${categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)} Products` : 'Browse All Products')
+    ? (categoryParam
+        ? `${categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)} Products`
+        : 'Browse All Products')
     : (subcategoryParam
         ? subcategoryParam.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) + ' Dupes'
         : categoryParam
@@ -312,7 +277,6 @@ const Browse = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h1 className="font-display text-3xl font-semibold tracking-tight">{pageTitle}</h1>
 
-            {/* Mode toggle */}
             <div className="flex items-center bg-muted rounded-xl p-1 self-start sm:self-auto">
               <button
                 type="button"
@@ -351,7 +315,11 @@ const Browse = () => {
               )}
               <Input
                 ref={inputRef}
-                placeholder={mode === 'products' ? "Search products by brand or name…" : "Search dupes by brand or product… (⌘K)"}
+                placeholder={
+                  mode === 'products'
+                    ? "Search products by brand or name…"
+                    : "Search dupes by brand or product… (⌘K)"
+                }
                 value={searchQuery}
                 onChange={(e) => handleChange(e.target.value)}
                 className="pl-9 pr-9"
@@ -378,12 +346,12 @@ const Browse = () => {
               {loading
                 ? "Searching…"
                 : mode === 'dupes'
-                ? `${searchResults?.length ?? 0} dupe${(searchResults?.length ?? 0) !== 1 ? "s" : ""} for "${debouncedQuery}"`
+                ? `${displayDupes.length} dupe${displayDupes.length !== 1 ? "s" : ""} for "${debouncedQuery}"`
                 : `${displayProducts.length} product${displayProducts.length !== 1 ? "s" : ""} for "${debouncedQuery}"`}
             </p>
           )}
 
-          {/* Dupes-only filters */}
+          {/* Dupes-only sort + subcategory filters */}
           {mode === 'dupes' && !debouncedQuery && (
             <>
               <div className="flex flex-wrap gap-2">
@@ -429,7 +397,7 @@ const Browse = () => {
         {mode === 'dupes' && (
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {loading && dupeItems.length === 0
+              {dupesLoading && displayDupes.length === 0
                 ? [...Array(PAGE_SIZE_DUPES)].map((_, i) => (
                     <div key={i} className="space-y-4">
                       <Skeleton className="aspect-square rounded-xl" />
@@ -442,7 +410,9 @@ const Browse = () => {
                   <div className="col-span-full py-16 text-center">
                     <Search className="h-10 w-10 mx-auto mb-4 text-muted-foreground/40" />
                     <p className="text-muted-foreground font-medium">No dupes found.</p>
-                    <p className="text-sm text-muted-foreground mt-1">Try a different search or browse by category.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Try a different search or browse by category.
+                    </p>
                   </div>
                 )
                 : displayDupes.map((dupe) => (
@@ -460,28 +430,24 @@ const Browse = () => {
                   ))}
             </div>
 
-            {/* Load more — dupes */}
-            {!debouncedQuery && dupeHasMore && (
-              <div className="mt-10 flex justify-center">
+            {/* Load more — grows the limit, re-queries */}
+            {!debouncedQuery && dupeHasMore && !dupesLoading && (
+              <div className="mt-10 flex flex-col items-center gap-2">
                 <Button
                   variant="outline"
                   size="lg"
                   className="rounded-xl px-8 gap-2"
-                  onClick={() => setDupePage((p) => p + 1)}
-                  disabled={dupesLoading}
+                  onClick={() => setDupeLimit((l) => l + PAGE_SIZE_DUPES)}
                 >
-                  {dupesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Load more dupes
                 </Button>
+                <p className="text-xs text-muted-foreground">Showing {displayDupes.length}</p>
               </div>
             )}
-
-            {/* Page count indicator */}
-            {!debouncedQuery && dupeItems.length > 0 && (
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                Showing {dupeItems.length} dupe{dupeItems.length !== 1 ? 's' : ''}
-                {dupeHasMore ? ' — more available' : ''}
-              </p>
+            {dupesLoading && displayDupes.length > 0 && (
+              <div className="mt-6 flex justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
             )}
           </>
         )}
@@ -490,14 +456,16 @@ const Browse = () => {
         {mode === 'products' && (
           <>
             <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {loading && displayProducts.length === 0
+              {productsLoading && displayProducts.length === 0
                 ? [...Array(PAGE_SIZE_PRODUCTS)].map((_, i) => <ProductSkeleton key={i} />)
-                : displayProducts.length === 0 && !loading
+                : displayProducts.length === 0 && !productsLoading
                 ? (
                   <div className="col-span-full py-16 text-center">
                     <Package className="h-10 w-10 mx-auto mb-4 text-muted-foreground/40" />
                     <p className="text-muted-foreground font-medium">No products found.</p>
-                    <p className="text-sm text-muted-foreground mt-1">Try a different search term.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Try a different search term.
+                    </p>
                   </div>
                 )
                 : displayProducts.map((product) => (
@@ -505,28 +473,24 @@ const Browse = () => {
                   ))}
             </div>
 
-            {/* Load more — products */}
+            {/* Load more — grows the limit, re-queries */}
             {productHasMore && !productsLoading && (
-              <div className="mt-10 flex justify-center">
+              <div className="mt-10 flex flex-col items-center gap-2">
                 <Button
                   variant="outline"
                   size="lg"
                   className="rounded-xl px-8 gap-2"
-                  onClick={() => setProductPage((p) => p + 1)}
-                  disabled={productsLoading}
+                  onClick={() => setProductLimit((l) => l + PAGE_SIZE_PRODUCTS)}
                 >
-                  {productsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Load more products
                 </Button>
+                <p className="text-xs text-muted-foreground">Showing {displayProducts.length}</p>
               </div>
             )}
-
-            {/* Page count indicator */}
-            {displayProducts.length > 0 && (
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                Showing {displayProducts.length} product{displayProducts.length !== 1 ? 's' : ''}
-                {productHasMore ? ' — more available' : ''}
-              </p>
+            {productsLoading && displayProducts.length > 0 && (
+              <div className="mt-6 flex justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
             )}
           </>
         )}
