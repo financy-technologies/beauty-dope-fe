@@ -24,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signInWithGoogle: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -60,13 +61,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
   };
 
+  // credential = Google ID token (JWT) from @react-oauth/google
+  const signInWithGoogle = async (credential: string) => {
+    const { accessToken, user: u } = await api.post<{ accessToken: string; user: ApiUser }>(
+      '/auth/google', { credential }
+    );
+    setToken(accessToken);
+    setUser(u);
+  };
+
   const signOut = async () => {
     clearToken();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

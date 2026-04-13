@@ -435,7 +435,7 @@ const Hero = () => {
         <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/30 blur-3xl" />
       </div>
 
-      <div className="container relative px-4 py-24 md:py-36 md:px-6">
+      <div className="container relative px-4 pt-8 pb-24 md:px-6">
         <div className="mx-auto max-w-4xl text-center">
 
           {/* Eyebrow */}
