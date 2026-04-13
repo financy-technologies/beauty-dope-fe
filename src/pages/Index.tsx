@@ -50,7 +50,7 @@ const Index = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[
                 { href: "/browse",               label: "Browse All Dupes",        desc: "2,500+ ingredient-verified dupe pairs" },
-                { href: "/browse?category=skin",  label: "Skincare Dupes",          desc: "Moisturisers, serums, toners & more" },
+                { href: "/browse?category=skincare",  label: "Skincare Dupes",          desc: "Moisturisers, serums, toners & more" },
                 { href: "/browse?category=makeup",label: "Makeup Dupes",            desc: "Foundation, blush, lip and eye" },
                 { href: "/dupes",                 label: "Dupe Finder",             desc: "Find dupes with ingredient tweaking" },
                 { href: "/ingredient-analyzer",   label: "Ingredient Analyzer",     desc: "Decode any INCI ingredient list" },

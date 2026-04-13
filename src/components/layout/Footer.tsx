@@ -6,7 +6,7 @@ const Footer = () => {
   const footerLinks = {
     discover: [
       { name: "Browse All Dupes", href: "/browse" },
-      { name: "Skincare", href: "/browse?category=skin" },
+      { name: "Skincare", href: "/browse?category=skincare" },
       { name: "Makeup", href: "/browse?category=makeup" },
       { name: "By Brand", href: "/brands" },
       { name: "Skin Guide", href: "/skin-guide" },

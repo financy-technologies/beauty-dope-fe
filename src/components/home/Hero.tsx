@@ -18,7 +18,7 @@ const TRUST_PILLS = [
 const FALLBACK_BRANDS = ["Charlotte Tilbury", "Drunk Elephant", "La Mer", "Tom Ford", "Tatcha", "NARS"];
 
 const CATEGORIES = [
-  { label: "Skincare",  href: "/browse?category=skin", emoji: "🧴" },
+  { label: "Skincare",  href: "/browse?category=skincare", emoji: "🧴" },
   { label: "Makeup",    href: "/browse?category=makeup",   emoji: "💄" },
   { label: "Trending",  href: "/browse?sort=trending",     emoji: "🔥" },
 ];
