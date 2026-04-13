@@ -108,11 +108,8 @@ const Auth = () => {
         <div className="absolute -bottom-40 -left-20 h-[400px] w-[400px] rounded-full bg-accent/20 blur-3xl" />
 
         {/* Logo */}
-        <Link to="/" className="relative flex items-center gap-2.5">
-          <img src="/skinevora_final.png" alt="Skinevora" className="h-10 w-auto object-contain brightness-0 invert" />
-          <span className="font-display text-xl font-semibold text-white tracking-tight">
-            Skine<span className="text-white/60">vora</span>
-          </span>
+        <Link to="/">
+          <img src="/skinevora_final.png" alt="Skinevora" className="h-12 w-auto object-contain brightness-0 invert" />
         </Link>
 
         {/* Hero copy */}
@@ -149,11 +146,8 @@ const Auth = () => {
       {/* ── Right panel — form ────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
         {/* Mobile logo */}
-        <Link to="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
-          <img src="/skinevora_final.png" alt="Skinevora" className="h-9 w-auto object-contain" />
-          <span className="font-display text-xl font-semibold tracking-tight">
-            Skine<span className="text-primary">vora</span>
-          </span>
+        <Link to="/" className="mb-8 lg:hidden">
+          <img src="/skinevora_final.png" alt="Skinevora" className="h-10 w-auto object-contain" />
         </Link>
 
         <div className="w-full max-w-sm">
