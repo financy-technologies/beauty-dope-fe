@@ -114,7 +114,7 @@ const Auth = () => {
 
         {/* Logo */}
         <Link to="/">
-          <img src="/skinevora_final.png" alt="Skinevora" className="h-12 w-auto object-contain brightness-0 invert" />
+          <img src="/skinevora_final.png" alt="Skinevora" className="h-12 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" />
         </Link>
 
         {/* Hero copy */}
@@ -152,16 +152,16 @@ const Auth = () => {
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
         {/* Mobile logo */}
         <Link to="/" className="mb-8 lg:hidden">
-          <img src="/skinevora_final.png" alt="Skinevora" className="h-10 w-auto object-contain" />
+          <img src="/skinevora_final.png" alt="Skinevora" className="h-14 w-auto object-contain" />
         </Link>
 
         <div className="w-full max-w-sm">
           {/* Heading */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-foreground">
+            <h1 className="font-display text-2xl font-semibold text-foreground tracking-tight">
               {isLogin ? "Welcome back" : "Create your account"}
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-sm font-body text-muted-foreground">
               {isLogin
                 ? "Sign in to access your favourites and reviews"
                 : "Join thousands finding luxury dupes for less"}
