@@ -1,11 +1,11 @@
 {
   "projects": {
-    "default": "dupefinder-6c12a"
+    "default": "skinevora-3b548"
   },
   "targets": {
-    "dupefinder-6c12a": {
+    "skinevora-3b548": {
       "hosting": {
-        "beautydope": ["beautydope"]
+        "app": ["skinevora-3b548"]
       }
     }
   }

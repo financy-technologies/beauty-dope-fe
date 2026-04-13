@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build",
+    "build:deploy": "vite build && node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
+    "deploy": "npm run build:deploy && firebase deploy --only hosting",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
