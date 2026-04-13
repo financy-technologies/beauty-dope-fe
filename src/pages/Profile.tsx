@@ -827,7 +827,7 @@ const ProfilePage = () => {
       <SEO
         title="My Profile — Skinevora"
         description="Manage your skin profile, track your points and redeem rewards."
-        canonical="/profile"
+        noIndex
       />
       <Header />
       <main className="flex-1">

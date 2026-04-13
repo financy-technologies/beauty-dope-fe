@@ -12,7 +12,7 @@ interface SEOProps {
 }
 
 const BASE_URL    = "https://skinevora.com";
-const DEFAULT_OG  = `${BASE_URL}/og-image.jpg`;
+const DEFAULT_OG  = `${BASE_URL}/skinevora_final.png`;
 const SITE_LOGO   = `${BASE_URL}/favicon.png`;
 const SITE_NAME   = "Skinevora";
 const TWITTER_HANDLE = "@skinevora";
@@ -51,8 +51,8 @@ export default function SEO({
       <meta property="og:type"        content={ogType} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
       <meta property="og:image"        content={ogImage} />
-      <meta property="og:image:width"  content="1200" />
-      <meta property="og:image:height" content="630" />
+      <meta property="og:image:width"  content="512" />
+      <meta property="og:image:height" content="512" />
       <meta property="og:image:alt"    content={fullTitle} />
       <meta property="og:locale"       content="en_IN" />
 

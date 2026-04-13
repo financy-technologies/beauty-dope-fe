@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/integrations/api/client';
-import type { Category } from '@/integrations/supabase/types';
+import type { Category } from '@/types/api';
 
 // Transform camelCase API response to match the Category type (snake_case image_url)
 function transform(c: any): Category {

@@ -77,9 +77,10 @@ const SkinGuide = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SEO
-        title="Skin Guide"
-        description="Choose your skin goal and follow a simple ingredient-first path to build an effective routine."
+        title="Skin Guide — Build a Routine Around Your Skin Goals"
+        description="Choose your skin concern — acne, ageing, dryness, pigmentation — and get a simple ingredient-first routine path. Free personalised skincare guidance on Skinevora."
         canonical="/skin-guide"
+        keywords="skincare routine guide, skin goals, acne skincare routine, anti ageing routine, dry skin routine"
       />
       <Header />
       <main className="flex-1">

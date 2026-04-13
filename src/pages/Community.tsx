@@ -12,9 +12,10 @@ const HIGHLIGHTS = [
 const Community = () => (
   <div className="min-h-screen flex flex-col">
     <SEO
-      title="Community"
-      description="Learn how Skinevora community reviews help validate dupe recommendations and improve ranking quality."
+      title="Community — Skincare Reviews & Dupe Validation"
+      description="Join the Skinevora community. Read real reviews, validate dupe recommendations, and help others find affordable skincare alternatives backed by ingredient science."
       canonical="/community"
+      keywords="skincare community, dupe reviews, skincare reviews, beauty community"
     />
     <Header />
     <main className="flex-1">

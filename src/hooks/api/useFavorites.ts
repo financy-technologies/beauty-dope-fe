@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/integrations/api/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import type { DupeWithProducts } from '@/integrations/supabase/types';
+import type { DupeWithProducts } from '@/types/api';
 
 export function useFavorites() {
   const { user } = useAuth();

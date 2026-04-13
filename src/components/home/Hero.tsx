@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { useSearchDupes } from "@/hooks/api/useSearch";
 import { useProductSearch, useTopBrands } from "@/hooks/api/useProductDetail";
-import type { DupeWithProducts } from "@/integrations/supabase/types";
+import type { DupeWithProducts } from "@/types/api";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const TRUST_PILLS = [

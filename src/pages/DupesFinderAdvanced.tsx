@@ -49,8 +49,10 @@ export default function DupesFinderAdvanced() {
   return (
     <>
       <SEO
-        title="Advanced Dupes Finder - Customize by Ingredients"
-        description="Find product dupes with your ingredient preferences. Include or exclude specific ingredients and filter by skin type."
+        title="Dupe Finder — Find Ingredient-Matched Skincare Dupes"
+        description="Find affordable dupes for luxury skincare using ingredient science. Filter by skin type, include or exclude actives, and get ranked results. Free on Skinevora."
+        canonical="/dupes"
+        keywords="dupe finder, skincare dupe finder, ingredient matched dupes, affordable skincare alternatives"
       />
       <Header />
 

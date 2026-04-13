@@ -852,8 +852,10 @@ export default function SkinStory() {
   return (
     <>
       <SEO
-        title="Your Skin Story — Deep Analysis | Skinevora"
-        description="A personalised deep analysis of your skin, hair, and biology. Get ingredient recommendations and matched products."
+        title="Skin Story — Personalised Deep Skin Analysis"
+        description="Get a personalised deep analysis of your skin type, concerns, and biology. Receive ingredient recommendations and matched product dupes tailored to you."
+        canonical="/skin-story"
+        keywords="skin analysis, personalised skincare, skin type analysis, ingredient recommendations"
       />
       <div className="min-h-screen flex flex-col bg-slate-50">
         <Header />

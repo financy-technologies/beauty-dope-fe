@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/integrations/api/client';
-import type { DupeWithProducts, TrendingDupe } from '@/integrations/supabase/types';
+import type { DupeWithProducts, TrendingDupe } from '@/types/api';
 
 interface DupesResponse {
   data: DupeWithProducts[];

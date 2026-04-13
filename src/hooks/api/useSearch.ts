@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/integrations/api/client';
-import type { DupeWithProducts } from '@/integrations/supabase/types';
+import type { DupeWithProducts } from '@/types/api';
 
 export function useSearchDupes(query: string) {
   return useQuery({
