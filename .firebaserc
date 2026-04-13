@@ -5,8 +5,11 @@
   "targets": {
     "skinevora-3b548": {
       "hosting": {
-        "app": ["skinevora-3b548"]
+        "app": [
+          "skinevora-3b548"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }
