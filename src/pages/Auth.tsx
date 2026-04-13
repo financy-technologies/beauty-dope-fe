@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -19,7 +19,12 @@ const Auth = () => {
   const location = useLocation();
   const isLogin = location.pathname === "/login";
   const navigate = useNavigate();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+
+  // Already signed in — redirect away
+  useEffect(() => {
+    if (user) navigate("/", { replace: true });
+  }, [user]);
   const { toast } = useToast();
 
   const [email, setEmail]               = useState("");

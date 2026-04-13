@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/auth/useAuth";
+import { SignInModalProvider } from "@/components/auth/SignInModal";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
@@ -45,6 +46,7 @@ const App = () => (
         <Sonner />
         <CookieBanner />
         <BrowserRouter>
+        <SignInModalProvider>
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -78,6 +80,7 @@ const App = () => (
             <Route path="/search" element={<Browse />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+        </SignInModalProvider>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

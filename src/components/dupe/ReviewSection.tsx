@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { useSignInModal } from "@/components/auth/SignInModal";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -37,6 +37,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 const ReviewSection = ({ dupeId }: Props) => {
   const { user } = useAuth();
+  const { openSignIn } = useSignInModal();
   const { toast } = useToast();
   const { data: reviews, isLoading } = useReviews(dupeId);
   const { data: myReview } = useUserReview(dupeId);
@@ -108,8 +109,8 @@ const ReviewSection = ({ dupeId }: Props) => {
       ) : (
         <div className="rounded-xl border border-border bg-card p-6 text-center">
           <p className="text-muted-foreground mb-3">Sign in to leave a review</p>
-          <Button asChild variant="outline">
-            <Link to="/login">Sign In</Link>
+          <Button variant="outline" onClick={() => openSignIn("Sign in to leave a review")}>
+            Sign In
           </Button>
         </div>
       )}

@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
@@ -21,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useSignInModal, GuestWall } from "@/components/auth/SignInModal";
 import { motion } from "framer-motion";
 import {
   User,
@@ -811,6 +811,11 @@ function RewardsTab() {
 
 const ProfilePage = () => {
   const { user, loading } = useAuth();
+  const { openSignIn } = useSignInModal();
+
+  useEffect(() => {
+    if (!loading && !user) openSignIn("Sign in to view your profile");
+  }, [loading, user]);
 
   if (loading) {
     return (
@@ -820,7 +825,13 @@ const ProfilePage = () => {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1"><GuestWall reason="Sign in to view your profile" /></main>
+      <Footer />
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">

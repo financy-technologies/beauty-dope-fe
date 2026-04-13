@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Heart } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -8,9 +8,15 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
+import { useSignInModal, GuestWall } from "@/components/auth/SignInModal";
 
 const Favorites = () => {
   const { user, loading: authLoading } = useAuth();
+  const { openSignIn } = useSignInModal();
+
+  useEffect(() => {
+    if (!authLoading && !user) openSignIn("Sign in to see your saved dupes");
+  }, [authLoading, user]);
   const { data: favDupes, isLoading } = useFavoritesDupes();
 
   if (authLoading) {
@@ -30,24 +36,13 @@ const Favorites = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Heart className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h1 className="font-display text-2xl font-semibold">Your Favorites</h1>
-            <p className="text-muted-foreground">Sign in to see your saved dupes</p>
-            <Button asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  if (!user) return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1"><GuestWall reason="Sign in to see your saved dupes" /></main>
+      <Footer />
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
