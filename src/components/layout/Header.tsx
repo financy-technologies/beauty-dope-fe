@@ -86,7 +86,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
           </p>
           <div className="space-y-0.5">
             {[
-              { label: "Browse all skincare dupes", href: "/browse?category=skincare" },
+              { label: "Browse all skincare dupes", href: "/browse?category=skin" },
               { label: "Browse all makeup dupes",   href: "/browse?category=makeup" },
               { label: "Top trending dupes",        href: "/browse?sort=trending" },
               { label: "Blog & ingredient guides",  href: "/blog" },
@@ -119,7 +119,7 @@ const Header = () => {
   const { data: topBrands } = useTopBrands(16);
 
   const navLinks = [
-    { name: "Skincare",  href: "/browse?category=skincare" },
+    { name: "Skincare",  href: "/browse?category=skin" },
     { name: "Makeup",    href: "/browse?category=makeup" },
     { name: "Blog",      href: "/blog" },
     { name: "Trending",  href: "/browse?sort=trending" },
