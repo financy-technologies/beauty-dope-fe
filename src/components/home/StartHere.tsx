@@ -11,12 +11,12 @@ const SKIN_GOALS = [
 ];
 
 const CATEGORIES = [
-  { label: "Cleansers", to: "/browse?subcategory=cleansers" },
-  { label: "Moisturizers", to: "/browse?subcategory=moisturizers" },
-  { label: "Sunscreens", to: "/browse?subcategory=sunscreens" },
-  { label: "Serums", to: "/browse?subcategory=serums" },
-  { label: "Exfoliators", to: "/browse?subcategory=exfoliators" },
-  { label: "Toners", to: "/browse?subcategory=toners" },
+  { label: "Cleansers",    to: "/browse?subcategory=cleanser" },
+  { label: "Moisturizers", to: "/browse?subcategory=moisturiser" },
+  { label: "Sunscreens",   to: "/browse?subcategory=sunscreen" },
+  { label: "Serums",       to: "/browse?subcategory=serum" },
+  { label: "Foundations",  to: "/browse?subcategory=foundation" },
+  { label: "Lipsticks",    to: "/browse?subcategory=lipstick" },
 ];
 
 const ACTIVES = [
