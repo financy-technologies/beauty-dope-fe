@@ -1,9 +1,15 @@
 User-agent: *
 Allow: /
 
+# Private / auth pages — no indexing value
 Disallow: /login
 Disallow: /signup
 Disallow: /favorites
 Disallow: /profile
+
+# Block query-param variants so crawl budget isn't wasted on filter combinations
+Disallow: /*?*sort=
+Disallow: /*?*page=
+Disallow: /*?*q=
 
 Sitemap: https://skinevora.com/sitemap.xml
