@@ -47,7 +47,6 @@ const Privacy = () => (
       title="Privacy Policy"
       description="Read Skinevora's privacy policy — how we collect, use, and protect your personal data on our skincare dupe platform."
       canonical="/privacy"
-      noIndex={false}
     />
     <Header />
     <main className="flex-1">

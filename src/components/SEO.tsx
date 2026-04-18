@@ -13,7 +13,6 @@ interface SEOProps {
 
 const BASE_URL       = "https://skinevora.com";
 const DEFAULT_OG     = `${BASE_URL}/skinevora_final.png`;
-const SITE_LOGO      = `${BASE_URL}/favicon.png`;
 const SITE_NAME      = "Skinevora";
 const TWITTER_HANDLE = "@skinevora";
 
@@ -70,8 +69,6 @@ export default function SEO({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image"       content={ogImage} />
       <meta name="twitter:image:alt"   content={fullTitle} />
-
-      <link rel="icon" type="image/png" href={SITE_LOGO} />
 
       {jsonLd && (
         <script type="application/ld+json">
