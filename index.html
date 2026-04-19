@@ -13,9 +13,25 @@
     <meta name="theme-color" content="#227d92" />
     <meta name="color-scheme" content="light dark" />
 
-    <!-- Title/description/canonical/OG/Twitter are all managed per-page by React Helmet.
-         Only a minimal fallback title is kept here for the brief pre-JS window. -->
+    <!-- Static fallbacks for the pre-JS crawl window (homepage only).
+         React Helmet replaces these once JS loads on inner pages. -->
     <title>Skinevora — Find your skin's smarter match</title>
+    <meta name="description" content="Skinevora is your science-backed skincare and makeup dupe finder. Discover ingredient breakdowns, compare products, and build routines personalized to your skin type." />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://skinevora.com/" />
+
+    <meta property="og:type"        content="website" />
+    <meta property="og:title"       content="Skinevora — Find your skin's smarter match" />
+    <meta property="og:description" content="Science-backed skincare and makeup dupe finder. Ingredient analysis, product comparisons, and personalized routines." />
+    <meta property="og:url"         content="https://skinevora.com/" />
+    <meta property="og:image"       content="https://skinevora.com/skinevora_final.png" />
+    <meta property="og:site_name"   content="Skinevora" />
+
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="Skinevora — Find your skin's smarter match" />
+    <meta name="twitter:description" content="Science-backed skincare and makeup dupe finder. Ingredient analysis, product comparisons, and personalized routines." />
+    <meta name="twitter:image"       content="https://skinevora.com/skinevora_final.png" />
+    <meta name="twitter:site"        content="@skinevora" />
 
     <!-- PWA / Mobile -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
