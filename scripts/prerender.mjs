@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { JSDOM } from "jsdom";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "../dist");
@@ -32,6 +33,39 @@ const routes = [
   "/terms",
   "/disclaimer",
 ];
+
+// When Helmet injects a tag (marked with data-rh="true"), the static tag
+// from index.html remains in the DOM too. Keep the Helmet version, drop the
+// static duplicate — otherwise Google sees conflicting canonical/description
+// tags and refuses to index the route as distinct from the homepage.
+const HELMET_MANAGED_SELECTORS = [
+  "title",
+  'link[rel="canonical"]',
+  'meta[name="description"]',
+  'meta[property="og:title"]',
+  'meta[property="og:description"]',
+  'meta[property="og:url"]',
+  'meta[property="og:image"]',
+  'meta[property="og:image:alt"]',
+  'meta[name="twitter:title"]',
+  'meta[name="twitter:description"]',
+  'meta[name="twitter:image"]',
+  'meta[name="twitter:image:alt"]',
+];
+
+function dedupeHelmetTags(html) {
+  const dom = new JSDOM(html);
+  const doc = dom.window.document;
+  for (const selector of HELMET_MANAGED_SELECTORS) {
+    const nodes = [...doc.querySelectorAll(selector)];
+    const hasHelmet = nodes.some((n) => n.getAttribute("data-rh") === "true");
+    if (!hasHelmet) continue;
+    for (const node of nodes) {
+      if (node.getAttribute("data-rh") !== "true") node.remove();
+    }
+  }
+  return dom.serialize();
+}
 
 function getFreePort() {
   return new Promise((resolve) => {
@@ -86,6 +120,8 @@ async function prerender() {
       const html = await page.content();
       await page.close();
 
+      const cleanedHtml = dedupeHelmetTags(html);
+
       // Determine output path
       const outputDir =
         route === "/"
@@ -93,7 +129,7 @@ async function prerender() {
           : path.join(distDir, ...route.split("/").filter(Boolean));
 
       await fs.mkdir(outputDir, { recursive: true });
-      await fs.writeFile(path.join(outputDir, "index.html"), html, "utf-8");
+      await fs.writeFile(path.join(outputDir, "index.html"), cleanedHtml, "utf-8");
       console.log(`  ✓ Saved to dist${route}/index.html`);
     }
   } finally {
