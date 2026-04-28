@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
+import { Link } from "react-router-dom";
 import { useSignInModal, GuestWall } from "@/components/auth/SignInModal";
 
 const Favorites = () => {

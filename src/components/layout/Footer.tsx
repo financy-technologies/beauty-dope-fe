@@ -40,7 +40,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
               <span className="font-display text-2xl font-semibold tracking-tight text-white">
-                Skine<span className="text-gold-light">vora</span>
+                Skin<span className="text-gold-light">evora</span>
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm text-white/50">

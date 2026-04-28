@@ -23,7 +23,7 @@ const TrendingSection = () => {
               <span className="text-sm font-semibold uppercase tracking-wider">Trending Now</span>
             </div>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl mb-8">
-              Community Favorites
+              Most-Loved Dupes
             </h2>
 
             <div className="space-y-4">
