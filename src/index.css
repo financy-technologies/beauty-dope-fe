@@ -205,4 +205,15 @@
   .shadow-gold {
     box-shadow: var(--shadow-teal);
   }
+
+
+}
+
+@layer base {
+  button[class*="bg-primary"] {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  button[class*="bg-primary"]:active {
+    transform: scale(0.97);
+  }
 }

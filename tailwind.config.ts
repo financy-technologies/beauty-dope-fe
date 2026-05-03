@@ -103,6 +103,14 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "draw-line": {
+          from: { transform: "scaleX(0)" },
+          to: { transform: "scaleX(1)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +119,8 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         shimmer: "shimmer 2s infinite linear",
+        "draw-line": "draw-line 0.8s ease-out forwards",
+        float: "float 6s ease-in-out infinite",
       },
     },
   },

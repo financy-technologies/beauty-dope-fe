@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -33,7 +34,13 @@ const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-border bg-espresso text-white/80">
+    <motion.footer
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="border-t border-border bg-espresso text-white/80"
+    >
       <div className="container px-4 py-14 md:px-6 md:py-20">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
@@ -150,7 +157,7 @@ const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 

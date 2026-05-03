@@ -4,6 +4,7 @@ import { ArrowRight, Zap, Package, Sparkles } from "lucide-react";
 import { useProducts } from "@/hooks/api/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { staggerContainer, staggerChild } from "@/lib/animations";
 
 function formatPrice(price: number, currency?: string, normalizedInr?: number): string {
   if (currency === 'USD') return `$${price.toLocaleString()}`;
@@ -21,17 +22,15 @@ interface ProductCardProps {
   index: number;
 }
 
-function ProductCard({ id, name, brand, price, imageUrl, category, index }: ProductCardProps) {
+function ProductCard({ id, name, brand, price, imageUrl, category }: ProductCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.07, duration: 0.45 }}
+      variants={staggerChild}
+      whileHover={{ y: -6, transition: { type: "spring", stiffness: 300, damping: 20 } }}
     >
       <Link
         to={`/product/${id}`}
-        className="group flex flex-col overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-200 hover:-translate-y-1"
+        className="group flex flex-col overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-elevated transition-[border-color,box-shadow] duration-200"
       >
         {/* Image */}
         <div className="relative aspect-square overflow-hidden bg-muted">
@@ -112,7 +111,13 @@ const FeaturedProducts = () => {
         </motion.div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+        >
           {isLoading ? (
             [...Array(8)].map((_, i) => (
               <div key={i} className="space-y-3">
@@ -140,7 +145,7 @@ const FeaturedProducts = () => {
               />
             ))
           )}
-        </div>
+        </motion.div>
 
         {/* Bottom CTA strip */}
         <motion.div

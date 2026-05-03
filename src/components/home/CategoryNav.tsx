@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCategories } from "@/hooks/api/useCategories";
 import { Skeleton } from "@/components/ui/skeleton";
+import { staggerContainer, staggerChild } from "@/lib/animations";
 
 const CategoryNav = () => {
   const { data: categories, isLoading, error } = useCategories();
@@ -26,9 +27,14 @@ const CategoryNav = () => {
         </motion.div>
 
         {/* Category Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid gap-6 md:grid-cols-3"
+        >
           {isLoading ? (
-            // Loading skeletons
             [...Array(3)].map((_, i) => (
               <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />
             ))
@@ -37,13 +43,10 @@ const CategoryNav = () => {
               <p className="text-muted-foreground">Unable to load categories.</p>
             </div>
           ) : (
-            categories?.map((category, index) => (
+            categories?.map((category) => (
               <motion.div
                 key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
+                variants={staggerChild}
               >
                 <Link
                   to={`/browse?category=${category.slug}`}
@@ -81,7 +84,7 @@ const CategoryNav = () => {
                     </div>
 
                     {/* Arrow indicator */}
-                    <div className="mt-4 flex items-center gap-2 text-secondary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <div className="mt-4 flex items-center gap-2 text-secondary opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                       <span className="text-sm font-medium">Explore</span>
                       <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -92,7 +95,7 @@ const CategoryNav = () => {
               </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

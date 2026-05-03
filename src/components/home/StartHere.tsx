@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { staggerContainer, scaleIn } from "@/lib/animations";
 
 const SKIN_GOALS = [
   { label: "Acne", to: "/skin-guide?goal=acne" },
@@ -30,14 +31,22 @@ const ACTIVES = [
 
 function LinkPill({ to, label }: { to: string; label: string }) {
   return (
-    <Link
-      to={to}
-      className="rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground/80 transition-colors hover:border-primary/35 hover:text-primary"
-    >
-      {label}
-    </Link>
+    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+      <Link
+        to={to}
+        className="inline-block rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground/80 transition-colors hover:border-primary/35 hover:text-primary"
+      >
+        {label}
+      </Link>
+    </motion.div>
   );
 }
+
+const SECTIONS = [
+  { title: "By Skin Goal", items: SKIN_GOALS },
+  { title: "By Category", items: CATEGORIES },
+  { title: "By Actives", items: ACTIVES },
+];
 
 const StartHere = () => {
   return (
@@ -55,34 +64,24 @@ const StartHere = () => {
           <p className="mt-3 text-muted-foreground">Browse by skin goal, category, or ingredient active to quickly narrow your picks.</p>
         </motion.div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <h3 className="font-display text-xl font-semibold">By Skin Goal</h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {SKIN_GOALS.map((item) => (
-                <LinkPill key={item.label} to={item.to} label={item.label} />
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <h3 className="font-display text-xl font-semibold">By Category</h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {CATEGORIES.map((item) => (
-                <LinkPill key={item.label} to={item.to} label={item.label} />
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <h3 className="font-display text-xl font-semibold">By Actives</h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {ACTIVES.map((item) => (
-                <LinkPill key={item.label} to={item.to} label={item.label} />
-              ))}
-            </div>
-          </div>
-        </div>
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="mt-10 grid gap-6 lg:grid-cols-3"
+        >
+          {SECTIONS.map((section) => (
+            <motion.div key={section.title} variants={scaleIn} className="rounded-2xl border border-border bg-card p-5">
+              <h3 className="font-display text-xl font-semibold">{section.title}</h3>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {section.items.map((item) => (
+                  <LinkPill key={item.label} to={item.to} label={item.label} />
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

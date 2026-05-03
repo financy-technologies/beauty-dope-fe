@@ -3,6 +3,7 @@ import DupeCard from "@/components/cards/DupeCard";
 import { useFeaturedDupes } from "@/hooks/api/useDupes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
+import { staggerContainer, staggerChild } from "@/lib/animations";
 
 const FeaturedDupes = () => {
   const { data: featuredDupes, isLoading, error } = useFeaturedDupes(4);
@@ -44,9 +45,14 @@ const FeaturedDupes = () => {
         </motion.div>
 
         {/* Dupe Cards Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
           {isLoading ? (
-            // Loading skeletons
             [...Array(4)].map((_, i) => (
               <div key={i} className="space-y-4">
                 <Skeleton className="aspect-square rounded-xl" />
@@ -55,19 +61,15 @@ const FeaturedDupes = () => {
               </div>
             ))
           ) : error ? (
-            // Error state
             <div className="col-span-full text-center py-8">
               <p className="text-muted-foreground">Unable to load featured dupes. Please try again later.</p>
             </div>
           ) : (
-            // Actual data
-            featuredDupes?.map((dupe, index) => (
+            featuredDupes?.map((dupe) => (
               <motion.div
                 key={dupe.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
+                variants={staggerChild}
+                whileHover={{ y: -6, transition: { type: "spring", stiffness: 300, damping: 20 } }}
               >
                 <DupeCard
                   id={dupe.id}
@@ -82,7 +84,7 @@ const FeaturedDupes = () => {
               </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

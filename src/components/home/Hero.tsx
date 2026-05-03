@@ -430,9 +430,9 @@ const Hero = () => {
     <section className="relative overflow-hidden bg-gradient-hero">
       {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-accent/5 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/30 blur-3xl" />
+        <div className="absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl animate-float" />
+        <div className="absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-accent/5 blur-3xl animate-float [animation-delay:2s]" />
+        <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/30 blur-3xl animate-float [animation-delay:4s]" />
       </div>
 
       <div className="container relative px-4 pt-8 pb-24 md:px-6">
@@ -453,9 +453,9 @@ const Hero = () => {
 
           {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.7, delay: 0.1 }}
             className="font-display text-5xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl md:text-7xl lg:text-8xl"
           >
             Luxury Look.
@@ -476,8 +476,8 @@ const Hero = () => {
 
           {/* ── Search box + dropdown ─────────────────────────── */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mx-auto mt-10 max-w-2xl"
           >
@@ -576,19 +576,21 @@ const Hero = () => {
 
           {/* Trust pills */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.45 }}
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.45 } } }}
             className="mt-6 flex flex-wrap items-center justify-center gap-3"
           >
             {TRUST_PILLS.map(({ icon: Icon, label }) => (
-              <span
+              <motion.span
                 key={label}
+                variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className="inline-flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground shadow-soft backdrop-blur-sm"
               >
                 <Icon className="h-3.5 w-3.5 text-primary" />
                 {label}
-              </span>
+              </motion.span>
             ))}
           </motion.div>
 

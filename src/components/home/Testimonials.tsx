@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { staggerContainer, staggerChild } from "@/lib/animations";
 
 const TESTIMONIALS = [
   {
@@ -54,17 +55,27 @@ const Testimonials = () => {
           </p>
         </motion.div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
-          {TESTIMONIALS.map((t, i) => (
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto"
+        >
+          {TESTIMONIALS.map((t) => (
             <motion.div
               key={t.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              variants={staggerChild}
               className="rounded-2xl border border-border bg-card p-5 shadow-soft flex flex-col"
             >
-              <Quote className="h-5 w-5 text-primary/30 mb-3" />
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.2 }}
+              >
+                <Quote className="h-5 w-5 text-primary/30 mb-3" />
+              </motion.div>
               <p className="text-sm text-foreground leading-relaxed flex-1">
                 "{t.text}"
               </p>
@@ -79,7 +90,15 @@ const Testimonials = () => {
                 <div className="text-right flex-shrink-0">
                   <div className="flex gap-0.5">
                     {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      <motion.span
+                        key={j}
+                        initial={{ opacity: 0, scale: 0 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 + j * 0.05, type: "spring", stiffness: 500, damping: 15 }}
+                      >
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      </motion.span>
                     ))}
                   </div>
                   <p className="text-[10px] font-semibold text-green-600 mt-0.5">
@@ -89,7 +108,7 @@ const Testimonials = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

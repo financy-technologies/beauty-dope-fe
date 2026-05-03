@@ -112,8 +112,15 @@ const Header = () => {
   const [isMenuOpen,   setIsMenuOpen]   = useState(false);
   const [toolsOpen,    setToolsOpen]    = useState(false);
   const [searchOpen,   setSearchOpen]   = useState(false);
+  const [scrolled,     setScrolled]     = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const navLinks = [
     { name: "Skincare",  href: "/browse?category=skin" },
@@ -145,7 +152,7 @@ const Header = () => {
         {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>
 
-      <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 transition-[border-color,box-shadow,backdrop-filter] duration-200 ${scrolled ? "border-border shadow-soft backdrop-blur-lg" : "border-border/50"}`}>
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center">

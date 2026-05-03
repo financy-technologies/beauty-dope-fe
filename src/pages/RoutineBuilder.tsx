@@ -547,7 +547,7 @@ const RoutineBuilder = () => {
       productId: selectedProduct.id,
       productName: `${selectedProduct.brand} ${selectedProduct.name}`,
       notes: notes.trim(),
-      price: selectedProduct.price || undefined,
+      price: Number(selectedProduct.price) || undefined,
     };
     setRoutine((prev) => ({ ...prev, [period]: [...prev[period], slot] }));
     setSelectedProduct(null);
@@ -568,7 +568,7 @@ const RoutineBuilder = () => {
 
   // ── Total routine cost ────────────────────────────────────────────────────
   const totalCost = [...routine.morning, ...routine.night].reduce(
-    (sum, s) => sum + ((s as ExtendedSlot).price ?? 0), 0,
+    (sum, s) => sum + (Number((s as ExtendedSlot).price) || 0), 0,
   );
 
   // ── Routine logs ──────────────────────────────────────────────────────────
@@ -853,7 +853,7 @@ const RoutineBuilder = () => {
                     )}
                     {totalCost > 0 && (
                       <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5">
-                        <span className="text-xs font-semibold text-emerald-700">₹{totalCost.toLocaleString("en-IN")} total</span>
+                        <span className="text-xs font-semibold text-emerald-700">₹{Math.round(totalCost).toLocaleString("en-IN")} total</span>
                       </div>
                     )}
                   </div>

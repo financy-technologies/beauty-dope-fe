@@ -394,7 +394,7 @@ function HonestyCheck({ similarityScore, sharedActives }: { similarityScore: num
   const color = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-500';
   const label = score >= 80 ? 'Highly Accurate Dupe' : score >= 60 ? 'Close Alternative' : 'Inspired By';
   const description = score >= 80
-    ? 'This dupe delivers on its claims — the active ingredients closely mirror the original.'
+    ? 'The overall formulation — actives, base ingredients, and texture — closely mirrors the original.'
     : score >= 60
     ? 'Performs similarly for most use cases. Minor differences in supporting ingredients.'
     : 'Inspired by the original. Expect a different but budget-friendly experience.';
@@ -417,7 +417,8 @@ function HonestyCheck({ similarityScore, sharedActives }: { similarityScore: num
           <Progress value={score} className="h-2" />
           {sharedActives.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {sharedActives.length} shared active{sharedActives.length > 1 ? 's' : ''}: {sharedActives.slice(0, 3).join(', ')}{sharedActives.length > 3 ? '…' : ''}
+              {sharedActives.length} shared key active{sharedActives.length > 1 ? 's' : ''}: {sharedActives.slice(0, 3).join(', ')}{sharedActives.length > 3 ? '…' : ''}
+              <span className="block mt-0.5 text-[10px]">Match % reflects full formulation similarity, not just actives.</span>
             </p>
           )}
         </div>
@@ -532,7 +533,7 @@ const DupeDetail = () => {
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  These efficacy-driving ingredients are shared by both products — why they work the same way.
+                  These are the hero actives shared by both products. The overall match score also factors in base ingredients, emollients, and formulation structure.
                 </p>
               </div>
             )}

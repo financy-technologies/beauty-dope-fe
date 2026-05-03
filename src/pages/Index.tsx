@@ -24,7 +24,7 @@ const HOME_JSON_LD = {
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col">
       <SEO
         canonical="/"
         description="Discover affordable, ingredient-matched dupes for luxury skincare and makeup. Science-backed analysis, 2,500+ verified dupe pairs — free on Skinevora."

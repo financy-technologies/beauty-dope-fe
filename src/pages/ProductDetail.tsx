@@ -538,7 +538,7 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col">
       <SEO
         canonical={`/product/${product.id}`}
         description={`${product.brand} ${product.name} — SkinEvora analysis, ingredient breakdown, dupes and reviews.`}

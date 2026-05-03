@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Search, FlaskConical, BadgeCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { staggerContainer, staggerChild } from "@/lib/animations";
 
 const STEPS = [
   {
@@ -26,6 +27,21 @@ const STEPS = [
   },
 ];
 
+const stepVariant = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const iconVariant = {
+  hidden: { opacity: 0, scale: 0.8, rotate: -10 },
+  visible: { opacity: 1, scale: 1, rotate: 0, transition: { type: "spring", stiffness: 300, damping: 20 } },
+};
+
+const badgeVariant = {
+  hidden: { opacity: 0, scale: 0 },
+  visible: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 400, damping: 15, delay: 0.15 } },
+};
+
 const HowItWorks = () => (
   <section className="py-20 md:py-28 bg-background">
     <div className="container px-4 md:px-6">
@@ -50,26 +66,39 @@ const HowItWorks = () => (
       </motion.div>
 
       {/* Steps */}
-      <div className="relative grid gap-8 md:grid-cols-3">
-        {/* Connector line (desktop only) */}
-        <div className="absolute left-0 right-0 top-10 hidden h-px bg-border md:block" style={{ left: "calc(16.67% + 2rem)", right: "calc(16.67% + 2rem)" }} />
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        className="relative grid gap-8 md:grid-cols-3"
+      >
+        {/* Connector line — draws left to right */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+          className="absolute left-0 right-0 top-10 hidden h-px bg-border md:block origin-left"
+          style={{ left: "calc(16.67% + 2rem)", right: "calc(16.67% + 2rem)" }}
+        />
 
-        {STEPS.map((step, i) => (
+        {STEPS.map((step) => (
           <motion.div
             key={step.number}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.12 }}
+            variants={staggerChild}
             className="relative flex flex-col items-center text-center"
           >
-            {/* Icon circle */}
-            <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-card ring-1 ring-border">
+            {/* Icon circle with rotation entrance */}
+            <motion.div variants={iconVariant} className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card shadow-card ring-1 ring-border">
               <step.icon className="h-8 w-8 text-primary" />
-              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <motion.span
+                variants={badgeVariant}
+                className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+              >
                 {step.number.replace("0", "")}
-              </span>
-            </div>
+              </motion.span>
+            </motion.div>
 
             <h3 className="mb-3 font-display text-xl font-semibold tracking-tight">
               {step.title}
@@ -79,7 +108,7 @@ const HowItWorks = () => (
             </p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* CTA */}
       <motion.div
@@ -89,12 +118,14 @@ const HowItWorks = () => (
         transition={{ duration: 0.5, delay: 0.4 }}
         className="mt-14 text-center"
       >
-        <Link
-          to="/browse"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground shadow-gold transition-all hover:bg-primary/90 hover:shadow-elevated"
-        >
-          Start Exploring Dupes
-        </Link>
+        <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} className="inline-block">
+          <Link
+            to="/browse"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground shadow-gold transition-all hover:bg-primary/90 hover:shadow-elevated"
+          >
+            Start Exploring Dupes
+          </Link>
+        </motion.div>
       </motion.div>
     </div>
   </section>
