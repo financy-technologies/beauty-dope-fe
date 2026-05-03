@@ -6,86 +6,70 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FlaskConical, AlertTriangle, CheckCircle2, Info, ChevronDown, ChevronUp, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-// ─── Static ingredient knowledge base ────────────────────────────────────────
-const INGREDIENT_DB: Record<string, {
-  category: string;
-  benefit: string;
-  concern?: string;
-  fungalAcneSafe: boolean;
-  comedogenic: boolean;
-  rating: "good" | "caution" | "avoid";
-}> = {
-  "niacinamide": { category: "Active", benefit: "Brightens skin tone, reduces pores, controls oil, anti-inflammatory", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "hyaluronic acid": { category: "Humectant", benefit: "Draws moisture into skin, deep hydration, plumping effect", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "retinol": { category: "Active (Vitamin A)", benefit: "Speeds cell turnover, reduces fine lines and wrinkles, fades dark spots", concern: "Can cause irritation, dryness, and photosensitivity — use at night and always apply SPF", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "glycerin": { category: "Humectant", benefit: "Attracts and retains moisture, strengthens skin barrier", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "salicylic acid": { category: "BHA Exfoliant", benefit: "Unclogs pores, anti-inflammatory, excellent for acne-prone skin", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "vitamin c": { category: "Antioxidant", benefit: "Brightens, evens skin tone, boosts collagen, protects from UV damage", concern: "Oxidises quickly — use a stable form (ascorbic acid or derivatives) and store away from light", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "ascorbic acid": { category: "Antioxidant (Vitamin C)", benefit: "Brightens skin, stimulates collagen synthesis, neutralises free radicals", concern: "Unstable in high concentrations — may sting sensitive skin", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "ceramide": { category: "Barrier Lipid", benefit: "Restores and strengthens the skin barrier, locks in moisture, soothes sensitivity", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "ceramides": { category: "Barrier Lipid", benefit: "Restores and strengthens the skin barrier, locks in moisture, soothes sensitivity", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "peptides": { category: "Active", benefit: "Signal skin to produce collagen, reduce wrinkles, firm and smooth", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "zinc oxide": { category: "Mineral Sunscreen", benefit: "Broad-spectrum UVA/UVB protection, anti-inflammatory, reef-safe", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "titanium dioxide": { category: "Mineral Sunscreen", benefit: "Broad-spectrum UV protection, gentle for sensitive skin", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "benzoyl peroxide": { category: "Antibacterial", benefit: "Kills acne-causing bacteria, reduces inflammation", concern: "Can bleach fabrics and hair — use carefully. May be drying at high concentrations", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "lactic acid": { category: "AHA Exfoliant", benefit: "Gentle exfoliation, brightening, hydrating — well tolerated by sensitive skin", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "glycolic acid": { category: "AHA Exfoliant", benefit: "Strong exfoliation, reduces fine lines, brightens skin tone", concern: "Can increase photosensitivity — always use SPF. Avoid with retinol in the same routine", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "kojic acid": { category: "Brightening", benefit: "Inhibits melanin production, reduces hyperpigmentation and dark spots", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "azelaic acid": { category: "Multi-active", benefit: "Targets acne, rosacea, hyperpigmentation simultaneously — suitable for sensitive skin", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "tranexamic acid": { category: "Brightening", benefit: "Reduces hyperpigmentation and melasma with minimal irritation", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "squalane": { category: "Emollient", benefit: "Lightweight, non-greasy moisturisation, antioxidant, stabilises skin barrier", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "jojoba oil": { category: "Emollient Oil", benefit: "Mimics skin's sebum, balances oil production, lightweight moisturiser", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "rosehip oil": { category: "Emollient Oil", benefit: "Rich in Vitamin A & C, fades scars and pigmentation, anti-ageing", concern: "May not be suitable for acne-prone skin due to high linoleic content", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "fragrance": { category: "Fragrance", benefit: "Adds scent to the product", concern: "Common allergen — can irritate sensitive or reactive skin, may trigger dermatitis", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "alcohol denat": { category: "Solvent / Preservative", benefit: "Helps other ingredients penetrate skin, light feel", concern: "Can be drying and disrupt the skin barrier with prolonged use", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "mineral oil": { category: "Occlusive", benefit: "Forms a barrier on skin to prevent water loss, extremely safe and non-sensitising", concern: "Can feel heavy — not ideal for oily/acne-prone skin", fungalAcneSafe: true, comedogenic: true, rating: "caution" },
-  "dimethicone": { category: "Silicone", benefit: "Silky texture, smooths skin, helps ingredients penetrate", concern: "Not reef-safe. Can trap debris in pores for some skin types", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "parabens": { category: "Preservative", benefit: "Prevents microbial growth, extends shelf life", concern: "Debated endocrine disruption concerns at high concentrations — regulated to safe levels in cosmetics", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "sodium lauryl sulfate": { category: "Surfactant", benefit: "Creates lather, removes oil and dirt", concern: "Can be too stripping for dry or sensitive skin — disrupts the lipid barrier", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "sls": { category: "Surfactant", benefit: "Creates lather, removes oil and dirt", concern: "Can be too stripping for dry or sensitive skin — disrupts the lipid barrier", fungalAcneSafe: true, comedogenic: false, rating: "caution" },
-  "polysorbate 20": { category: "Emulsifier", benefit: "Blends oil and water phases, helps spread product evenly", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "cocamidopropyl betaine": { category: "Surfactant", benefit: "Mild surfactant, creates soft lather, antistatic", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "water": { category: "Solvent / Base", benefit: "Base of most formulations, carries other ingredients", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "aqua": { category: "Solvent / Base", benefit: "Base of most formulations, carries other ingredients", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "aloe vera": { category: "Soothing", benefit: "Soothes irritation and redness, lightweight hydration", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "aloe barbadensis leaf juice": { category: "Soothing", benefit: "Soothes irritation and redness, lightweight hydration", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "panthenol": { category: "Humectant / Vitamin B5", benefit: "Soothes, moisturises, and helps repair the skin barrier", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "allantoin": { category: "Soothing", benefit: "Calms irritation, promotes cell renewal, safe for sensitive skin", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "tocopherol": { category: "Antioxidant / Vitamin E", benefit: "Antioxidant protection, moisturising, stabilises other ingredients", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "vitamin e": { category: "Antioxidant", benefit: "Antioxidant protection, moisturising, stabilises other ingredients", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "green tea extract": { category: "Antioxidant", benefit: "Anti-inflammatory, antioxidant, helps with oiliness and skin brightening", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "caffeine": { category: "Active", benefit: "Reduces puffiness and dark circles, antioxidant, improves microcirculation", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "bakuchiol": { category: "Active (Plant Retinol)", benefit: "Natural retinol alternative — anti-ageing, fewer side effects, pregnancy-safe", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "centella asiatica": { category: "Soothing", benefit: "Calms inflammation, aids wound healing, excellent for sensitive/acne skin", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "cica": { category: "Soothing", benefit: "Calms inflammation, aids wound healing, excellent for sensitive/acne skin", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "alpha arbutin": { category: "Brightening", benefit: "Inhibits melanin production, reduces dark spots and uneven tone with less irritation than hydroquinone", fungalAcneSafe: true, comedogenic: false, rating: "good" },
-  "kojic dipalmitate": { category: "Brightening", benefit: "More stable form of kojic acid — reduces hyperpigmentation", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "ferulic acid": { category: "Antioxidant", benefit: "Boosts efficacy of Vitamins C and E, protects from UV damage", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "resveratrol": { category: "Antioxidant", benefit: "Potent antioxidant, anti-ageing, anti-inflammatory", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "coenzyme q10": { category: "Antioxidant", benefit: "Protects cells from oxidative damage, anti-ageing", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-  "aha": { category: "Chemical Exfoliant", benefit: "Exfoliates dead skin cells, brightens, improves texture", concern: "Increases photosensitivity — always use SPF", fungalAcneSafe: false, comedogenic: false, rating: "caution" },
-  "bha": { category: "Chemical Exfoliant", benefit: "Oil-soluble exfoliant — unclogs pores, reduces acne", fungalAcneSafe: false, comedogenic: false, rating: "good" },
-};
+import INGREDIENT_DB, { type IngredientInfo } from "@/data/ingredientDb";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ParsedIngredient {
   raw: string;
   key: string;
   found: boolean;
-  info?: typeof INGREDIENT_DB[string];
+  info?: IngredientInfo;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Matching engine ─────────────────────────────────────────────────────────
+const DB_KEYS = Object.keys(INGREDIENT_DB);
+
+function normalize(s: string): string {
+  return s.toLowerCase()
+    .replace(/[®™©]/g, "")
+    .replace(/\s*\(.*?\)\s*/g, " ")    // strip parentheticals
+    .replace(/\d+(\.\d+)?%/g, "")      // strip percentages
+    .replace(/[^a-z0-9 /\-,]/g, " ")   // keep alphanumeric, slashes, hyphens
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findIngredient(raw: string): IngredientInfo | undefined {
+  const key = normalize(raw);
+  if (!key) return undefined;
+
+  // 1. Exact match
+  if (INGREDIENT_DB[key]) return INGREDIENT_DB[key];
+
+  // 2. Try without trailing numbers/letters (e.g. "ceramide np" → "ceramide")
+  const withoutTrailing = key.replace(/\s+\w{1,3}$/, "");
+  if (withoutTrailing !== key && INGREDIENT_DB[withoutTrailing]) return INGREDIENT_DB[withoutTrailing];
+
+  // 3. Check if any DB key is contained within the input or vice versa
+  for (const dbKey of DB_KEYS) {
+    if (dbKey.length >= 4 && (key.includes(dbKey) || dbKey.includes(key))) {
+      return INGREDIENT_DB[dbKey];
+    }
+  }
+
+  // 4. Try matching the parenthetical content from the original raw input
+  const parenMatch = raw.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const parenKey = normalize(parenMatch[1]);
+    if (INGREDIENT_DB[parenKey]) return INGREDIENT_DB[parenKey];
+    for (const dbKey of DB_KEYS) {
+      if (dbKey.length >= 4 && (parenKey.includes(dbKey) || dbKey.includes(parenKey))) {
+        return INGREDIENT_DB[dbKey];
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function parseIngredients(text: string): ParsedIngredient[] {
   return text
     .split(/,|\n/)
     .map((s) => s.trim())
     .filter(Boolean)
     .map((raw) => {
-      const key = raw.toLowerCase().replace(/\s+/g, " ").trim();
-      const found = key in INGREDIENT_DB;
-      return { raw, key, found, info: INGREDIENT_DB[key] };
+      const info = findIngredient(raw);
+      return { raw, key: normalize(raw), found: !!info, info };
     });
 }
 
@@ -169,20 +153,32 @@ function IngredientCard({ ingredient }: { ingredient: ParsedIngredient }) {
   );
 }
 
+// ─── Example pre-fill ─────────────────────────────────────────────────────────
+const EXAMPLE_INGREDIENTS = "Water, Glycerin, Niacinamide, Sodium Hyaluronate, Ceramide NP, Salicylic Acid, Tocopherol, Dimethicone, Fragrance, Retinol, Aloe Barbadensis Leaf Juice, Panthenol";
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 const IngredientAnalyzer = () => {
   const [input, setInput] = useState("");
-  const [results, setResults] = useState<ParsedIngredient[] | null>(null);
+  const [results, setResults] = useState<ParsedIngredient[] | null>(() => parseIngredients(EXAMPLE_INGREDIENTS));
+  const [isExample, setIsExample] = useState(true);
 
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    setIsExample(false);
     setResults(parseIngredients(input));
   };
 
   const handleClear = () => {
     setInput("");
     setResults(null);
+    setIsExample(false);
+  };
+
+  const handleTryExample = () => {
+    setInput(EXAMPLE_INGREDIENTS);
+    setIsExample(false);
+    setResults(parseIngredients(EXAMPLE_INGREDIENTS));
   };
 
   const goodCount = results?.filter((r) => r.info?.rating === "good").length ?? 0;
@@ -258,6 +254,22 @@ const IngredientAnalyzer = () => {
                   )}
                 </div>
               </form>
+
+              {/* Example banner */}
+              {isExample && results && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-center justify-between gap-3"
+                >
+                  <p className="text-sm text-primary">
+                    <span className="font-semibold">Sample analysis below</span> — paste your own ingredient list above to get started.
+                  </p>
+                  <Button size="sm" variant="outline" onClick={handleTryExample} className="flex-shrink-0 text-xs">
+                    Copy example to editor
+                  </Button>
+                </motion.div>
+              )}
 
               {/* Results */}
               <AnimatePresence>

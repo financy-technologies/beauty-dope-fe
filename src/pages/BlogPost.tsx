@@ -3,8 +3,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-import { Clock, ArrowLeft, ChevronRight, AlertTriangle, Lightbulb } from "lucide-react";
-import { getBlogPost, BLOG_POSTS, type BlogSection, type IngredientItem } from "@/data/blogPosts";
+import { Clock, ArrowLeft, ChevronRight, AlertTriangle, Lightbulb, Check, ShoppingBag } from "lucide-react";
+import { getBlogPost, BLOG_POSTS, type BlogSection, type IngredientItem, type ProductPick } from "@/data/blogPosts";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
@@ -12,12 +12,13 @@ function formatDate(iso: string) {
 
 /* ── Ingredient card ─────────────────────────────────────────────────────── */
 function IngredientCard({ item }: { item: IngredientItem }) {
+  const showInci = item.inci.toLowerCase() !== item.name.toLowerCase() && !item.name.toLowerCase().startsWith(item.inci.toLowerCase());
   return (
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 my-1">
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div>
           <h4 className="font-semibold text-foreground">{item.name}</h4>
-          <p className="text-xs text-muted-foreground font-mono">{item.inci}</p>
+          {showInci && <p className="text-xs text-muted-foreground font-mono">{item.inci}</p>}
         </div>
         <div className="flex flex-wrap gap-1">
           {item.skinTypes.map((st) => (
@@ -117,6 +118,41 @@ function RenderSection({ section, index }: { section: BlogSection; index: number
               ))}
             </tbody>
           </table>
+        </div>
+      );
+
+    case "product-picks":
+      return (
+        <div className="my-6 grid gap-3 sm:grid-cols-2">
+          {section.products?.map((product) => (
+            <div key={`${product.brand}-${product.name}`} className="rounded-xl border border-accent/20 bg-accent/5 p-4">
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-accent">{product.brand}</p>
+                  <h4 className="font-semibold text-foreground text-sm leading-snug">{product.name}</h4>
+                </div>
+                <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-bold text-accent">
+                  {product.price}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{product.why}</p>
+            </div>
+          ))}
+        </div>
+      );
+
+    case "checklist":
+      return (
+        <div className="my-6 space-y-2">
+          {section.checkItems?.map((item) => (
+            <div key={item.label} className="flex gap-3 rounded-lg border border-border bg-card px-4 py-3">
+              <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="text-sm font-semibold text-foreground">{item.label}</span>
+                <span className="text-sm text-muted-foreground"> — {item.note}</span>
+              </div>
+            </div>
+          ))}
         </div>
       );
 

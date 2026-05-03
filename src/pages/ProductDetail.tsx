@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft, Star, Heart, Share2, ExternalLink, ShieldCheck,
@@ -16,6 +16,10 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useProductDetail, type ParsedIngredient, type DupeForProduct } from "@/hooks/api/useProductDetail";
+import { useToggleFavorite, useFavorites } from "@/hooks/api/useFavorites";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useSignInModal } from "@/components/auth/SignInModal";
+import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,6 +65,18 @@ const EVIDENCE_STYLES: Record<string, string> = {
   promising:  'bg-blue-100 text-blue-700',
   limited:    'bg-amber-100 text-amber-700',
 };
+
+/** Parse makeup-specific attributes from description text */
+function parseMakeupAttributes(description?: string | null) {
+  if (!description) return { finish: null, coverage: null };
+  const lower = description.toLowerCase();
+  const finishMatch = ['matte', 'dewy', 'satin', 'natural', 'luminous', 'semi-matte'].find(f => lower.includes(f));
+  const coverageMatch = ['full coverage', 'medium coverage', 'light coverage', 'sheer coverage', 'buildable coverage'].find(c => lower.includes(c));
+  return {
+    finish: finishMatch ? finishMatch.charAt(0).toUpperCase() + finishMatch.slice(1) : null,
+    coverage: coverageMatch ? coverageMatch.charAt(0).toUpperCase() + coverageMatch.slice(1) : null,
+  };
+}
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -268,7 +284,7 @@ function ReviewStars({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'm
 
 // ─── Sticky Section Nav ────────────────────────────────────────────────────────
 
-const SECTIONS = [
+const ALL_SECTIONS = [
   { id: 'hero',        label: 'Overview' },
   { id: 'scores',      label: 'Scores' },
   { id: 'summary',     label: 'Summary' },
@@ -279,12 +295,12 @@ const SECTIONS = [
   { id: 'reviews',     label: 'Reviews' },
 ];
 
-function StickyNav({ activeSection }: { activeSection: string }) {
+function StickyNav({ activeSection, visibleSections }: { activeSection: string; visibleSections: Set<string> }) {
   return (
     <nav className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container px-4 md:px-6">
         <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide py-0">
-          {SECTIONS.map((s) => (
+          {ALL_SECTIONS.filter(s => visibleSections.has(s.id)).map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
@@ -383,9 +399,13 @@ function ProductDetailSkeleton() {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, error } = useProductDetail(id);
+  const { user } = useAuth();
+  const { openSignIn } = useSignInModal();
+  const { toast } = useToast();
+  const { data: favoriteIds } = useFavorites();
+  const toggleFavorite = useToggleFavorite();
   const [activeSection, setActiveSection] = useState('hero');
   const [dupeTier, setDupeTier] = useState<'all' | 'budget' | 'mid' | 'premium'>('all');
-  const [wishlist, setWishlist] = useState(false);
   const [openIngGroup, setOpenIngGroup] = useState<string | null>('starActives');
 
   if (isLoading) {
@@ -413,6 +433,27 @@ const ProductDetail = () => {
     );
   }
 
+  // ─── Derived state ───────────────────────────────────────────────────────────
+
+  const category = product.category as 'skin' | 'hair' | 'makeup' | string;
+  const isSkin = category === 'skin';
+  const isHair = category === 'hair';
+  const isMakeup = category === 'makeup';
+
+  const hasBreakdown = product.ingredientBreakdown != null;
+  const hasActives = (product.ingredientBreakdown?.actives?.length ?? 0) > 0;
+  const hasIngredients = product.parsedIngredients.length > 0;
+
+  const ethicsValues = [
+    product.ethics.fragranceFree,
+    product.ethics.alcoholFree,
+    product.ethics.parabenFree,
+    product.ethics.siliconeFree,
+    product.ingredientBreakdown?.fungalAcneSafe ?? null,
+    product.ingredientBreakdown?.pregnancySafe ?? null,
+  ];
+  const allEthicsNull = ethicsValues.every(v => v === null);
+
   const scores = product.skinevoraScores;
   const irritStyle = irritancyStyle(scores.irritancy);
   const filteredDupes = dupeTier === 'all' ? product.dupes :
@@ -420,8 +461,81 @@ const ProductDetail = () => {
     dupeTier === 'mid' ? product.dupes.filter(d => d.dupeProduct.normalizedPriceInr >= 500 && d.dupeProduct.normalizedPriceInr < 1500) :
     product.dupes.filter(d => d.dupeProduct.normalizedPriceInr >= 1500);
 
+  const hasDupes = product.dupes.length > 0;
   const topDupe = product.dupes[0];
   const suitability = product.skinTypeSuitability;
+
+  // Determine which sections are visible
+  const showScores = hasBreakdown;
+  const showWorksFor = !isHair;
+  const showEthics = !allEthicsNull;
+  const showIngredients = hasIngredients;
+
+  const visibleSections = new Set<string>(['hero', 'summary', 'dupes', 'reviews']);
+  if (showScores) visibleSections.add('scores');
+  if (showWorksFor) visibleSections.add('worksfor');
+  if (showEthics) visibleSections.add('ethics');
+  if (showIngredients) visibleSections.add('ingredients');
+
+  // Verdict text — fix #4
+  const getVerdictText = () => {
+    if (scores.efficacy >= 75) return 'Highly Recommended';
+    if (scores.efficacy >= 55) return 'Good Pick';
+    if (hasDupes) return 'Better Dupes Available';
+    return 'Needs More Analysis';
+  };
+
+  // Favorites — fix #3
+  const firstDupeId = topDupe?.id;
+  const isFavorited = firstDupeId ? (favoriteIds ?? []).includes(firstDupeId) : false;
+
+  const handleFavoriteClick = () => {
+    if (!user) {
+      openSignIn("Sign in to save favorites");
+      return;
+    }
+    if (!firstDupeId) {
+      toast({
+        title: "Favorites work on dupe comparisons",
+        description: "Find this product's dupes below to add to favorites.",
+      });
+      return;
+    }
+    toggleFavorite.mutate({ dupeId: firstDupeId, isFavorite: isFavorited });
+  };
+
+  // Makeup attributes
+  const makeupAttrs = isMakeup ? parseMakeupAttributes(product.description) : null;
+
+  // Category-specific summary cards — fix #7
+  const getSummaryCards = () => {
+    const cards: { label: string; value: string; icon: React.ReactNode }[] = [];
+
+    if (isHair) {
+      cards.push({ label: 'What it is', value: [product.category, product.subcategory].filter(Boolean).join(' · ') || 'Hair care product', icon: <Package className="h-4 w-4" /> });
+      cards.push({ label: 'Hair type', value: product.skinTypeRecommendedFor?.length ? product.skinTypeRecommendedFor.join(', ') : 'All hair types', icon: <Users className="h-4 w-4" /> });
+      cards.push({ label: 'How to use', value: 'Follow product instructions', icon: <Zap className="h-4 w-4" /> });
+      cards.push({ label: 'Size / Format', value: product.size ?? 'See product listing', icon: <Package className="h-4 w-4" /> });
+    } else if (isMakeup) {
+      cards.push({ label: 'What it is', value: [product.category, product.subcategory].filter(Boolean).join(' · ') || 'Makeup product', icon: <Package className="h-4 w-4" /> });
+      cards.push({ label: 'Skin tone compatibility', value: product.skinTypeRecommendedFor?.length ? product.skinTypeRecommendedFor.join(', ') : 'All skin tones', icon: <Users className="h-4 w-4" /> });
+      if (makeupAttrs?.finish) {
+        cards.push({ label: 'Finish type', value: makeupAttrs.finish, icon: <Sparkles className="h-4 w-4" /> });
+      }
+      if (makeupAttrs?.coverage) {
+        cards.push({ label: 'Coverage', value: makeupAttrs.coverage, icon: <ShieldCheck className="h-4 w-4" /> });
+      }
+      cards.push({ label: 'Size / Format', value: product.size ?? 'See product listing', icon: <Package className="h-4 w-4" /> });
+    } else {
+      // Skincare (default)
+      cards.push({ label: 'What it is', value: [product.category, product.subcategory].filter(Boolean).join(' · ') || 'Skincare product', icon: <Package className="h-4 w-4" /> });
+      cards.push({ label: 'Best for skin types', value: product.skinTypeRecommendedFor?.length ? product.skinTypeRecommendedFor.join(', ') : 'All skin types', icon: <Users className="h-4 w-4" /> });
+      cards.push({ label: 'Routine placement', value: 'AM / PM — check product instructions', icon: <Zap className="h-4 w-4" /> });
+      cards.push({ label: 'Size / Format', value: product.size ?? 'See product listing', icon: <Package className="h-4 w-4" /> });
+    }
+
+    return cards;
+  };
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
@@ -430,7 +544,7 @@ const ProductDetail = () => {
         description={`${product.brand} ${product.name} — SkinEvora analysis, ingredient breakdown, dupes and reviews.`}
       />
       <Header />
-      <StickyNav activeSection={activeSection} />
+      <StickyNav activeSection={activeSection} visibleSections={visibleSections} />
 
       <main className="flex-1">
 
@@ -460,25 +574,27 @@ const ProductDetail = () => {
                     className="h-full w-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
                   />
-                  {/* SkinEvora Verdict badge */}
-                  <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur-sm rounded-xl p-3 shadow-elevated border border-border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">SkinEvora Verdict</p>
-                        <p className={cn("text-base font-bold mt-0.5",
-                          scores.efficacy >= 75 ? 'text-emerald-600' :
-                          scores.efficacy >= 55 ? 'text-amber-600' : 'text-red-600'
-                        )}>
-                          {scores.efficacy >= 75 ? 'Highly Recommended' : scores.efficacy >= 55 ? 'Good Pick' : 'Better Dupes Available'}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className={cn("rounded-full border-2 flex items-center justify-center h-12 w-12 font-bold text-sm", scoreColor(scores.efficacy).ring, scoreColor(scores.efficacy).text)}>
-                          {scores.efficacy}
+                  {/* SkinEvora Verdict badge — only when breakdown exists (fix #1) */}
+                  {hasBreakdown && (
+                    <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur-sm rounded-xl p-3 shadow-elevated border border-border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">SkinEvora Verdict</p>
+                          <p className={cn("text-base font-bold mt-0.5",
+                            scores.efficacy >= 75 ? 'text-emerald-600' :
+                            scores.efficacy >= 55 ? 'text-amber-600' : 'text-red-600'
+                          )}>
+                            {getVerdictText()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className={cn("rounded-full border-2 flex items-center justify-center h-12 w-12 font-bold text-sm", scoreColor(scores.efficacy).ring, scoreColor(scores.efficacy).text)}>
+                            {scores.efficacy}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
 
@@ -537,7 +653,7 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                {/* CTAs */}
+                {/* CTAs — fix #3: real favorites */}
                 <div className="flex items-center gap-3">
                   {product.sourceUrl ? (
                     <Button asChild className="flex-1 gap-2 h-12 rounded-xl font-semibold shadow-teal">
@@ -555,11 +671,12 @@ const ProductDetail = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className={cn("h-12 w-12 rounded-xl", wishlist && "border-rose text-rose")}
-                    onClick={() => setWishlist((v) => !v)}
+                    className={cn("h-12 w-12 rounded-xl", isFavorited && "border-rose text-rose")}
+                    onClick={handleFavoriteClick}
+                    disabled={toggleFavorite.isPending}
                     aria-label="Wishlist"
                   >
-                    <Heart className={cn("h-5 w-5 transition-colors", wishlist && "fill-rose text-rose")} />
+                    <Heart className={cn("h-5 w-5 transition-colors", isFavorited && "fill-rose text-rose")} />
                   </Button>
                   <Button
                     variant="outline"
@@ -586,58 +703,71 @@ const ProductDetail = () => {
         </section>
 
         {/* ───────────────────────────────── ZONE 2 — SCORES ──── */}
-        <section id="scores" className="py-12 bg-background">
-          <div className="container px-4 md:px-6">
-            <div className="mb-8">
-              <h2 className="font-display text-2xl font-semibold text-foreground">SkinEvora Score Card</h2>
-              <p className="text-muted-foreground text-sm mt-1">Science-backed analysis across four dimensions</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Circle scores */}
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <div className="flex items-center justify-around">
-                  <ScoreCircle score={scores.efficacy} label="Efficacy Score" />
-                  <ScoreCircle score={scores.value} label="Value Score" />
-                  <ScoreCircle score={scores.clean} label="Clean Score" />
-                </div>
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  Scores are derived from ingredient analysis and dupe availability
-                </p>
+        {/* Fix #1: Hide entire scores section when no ingredientBreakdown */}
+        {showScores ? (
+          <section id="scores" className="py-12 bg-background">
+            <div className="container px-4 md:px-6">
+              <div className="mb-8">
+                <h2 className="font-display text-2xl font-semibold text-foreground">SkinEvora Score Card</h2>
+                <p className="text-muted-foreground text-sm mt-1">Science-backed analysis across four dimensions</p>
               </div>
 
-              {/* Irritancy + metric bars */}
-              <div className="space-y-4">
-                {/* Irritancy banner */}
-                <div className={cn('flex items-center gap-3 rounded-2xl border px-5 py-4', irritStyle.bg)}>
-                  <AlertTriangle className={cn("h-5 w-5 shrink-0", irritStyle.icon)} />
-                  <div>
-                    <p className={cn("text-sm font-semibold", irritStyle.text)}>{irritStyle.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">Irritancy level: <strong>{scores.irritancy}</strong></p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Circle scores */}
+                <div className="bg-card rounded-2xl border border-border p-6">
+                  <div className="flex items-center justify-around">
+                    <ScoreCircle score={scores.efficacy} label="Efficacy Score" />
+                    <ScoreCircle score={scores.value} label="Value Score" />
+                    <ScoreCircle score={scores.clean} label="Clean Score" />
                   </div>
+                  <p className="text-xs text-muted-foreground text-center mt-4">
+                    Scores are derived from ingredient analysis and dupe availability
+                  </p>
                 </div>
 
-                {/* Score bars */}
-                {[
-                  { label: 'Efficacy', score: scores.efficacy, hint: 'Does it work as claimed?' },
-                  { label: 'Value', score: scores.value, hint: 'Worth the price vs. dupes?' },
-                  { label: 'Clean Formula', score: scores.clean, hint: 'Free from unnecessary additives?' },
-                ].map(({ label, score, hint }) => (
-                  <div key={label} className="bg-card rounded-xl border border-border px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{label}</p>
-                        <p className="text-xs text-muted-foreground">{hint}</p>
-                      </div>
-                      <span className={cn("text-lg font-bold", scoreColor(score).text)}>{score}</span>
+                {/* Irritancy + metric bars */}
+                <div className="space-y-4">
+                  {/* Irritancy banner */}
+                  <div className={cn('flex items-center gap-3 rounded-2xl border px-5 py-4', irritStyle.bg)}>
+                    <AlertTriangle className={cn("h-5 w-5 shrink-0", irritStyle.icon)} />
+                    <div>
+                      <p className={cn("text-sm font-semibold", irritStyle.text)}>{irritStyle.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 capitalize">Irritancy level: <strong>{scores.irritancy}</strong></p>
                     </div>
-                    <Progress value={score} className="h-2" />
                   </div>
-                ))}
+
+                  {/* Score bars */}
+                  {[
+                    { label: 'Efficacy', score: scores.efficacy, hint: 'Does it work as claimed?' },
+                    { label: 'Value', score: scores.value, hint: 'Worth the price vs. dupes?' },
+                    { label: 'Clean Formula', score: scores.clean, hint: 'Free from unnecessary additives?' },
+                  ].map(({ label, score, hint }) => (
+                    <div key={label} className="bg-card rounded-xl border border-border px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{label}</p>
+                          <p className="text-xs text-muted-foreground">{hint}</p>
+                        </div>
+                        <span className={cn("text-lg font-bold", scoreColor(score).text)}>{score}</span>
+                      </div>
+                      <Progress value={score} className="h-2" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : (
+          <section id="scores" className="py-12 bg-background">
+            <div className="container px-4 md:px-6">
+              <div className="text-center py-10 bg-muted/20 rounded-2xl border border-border">
+                <FlaskConical className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="font-medium text-foreground mb-1">No ingredient data available</p>
+                <p className="text-sm text-muted-foreground">Scores will appear once ingredient analysis is complete for this product.</p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ───────────────────────────────── ZONE 3 — SUMMARY ──── */}
         <section id="summary" className="py-12 bg-secondary/20">
@@ -645,12 +775,7 @@ const ProductDetail = () => {
             <h2 className="font-display text-2xl font-semibold text-foreground mb-8">Product Summary</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { label: 'What it is', value: [product.category, product.subcategory].filter(Boolean).join(' · ') || 'Skincare product', icon: <Package className="h-4 w-4" /> },
-                { label: 'Best for skin types', value: product.skinTypeRecommendedFor?.length ? product.skinTypeRecommendedFor.join(', ') : 'All skin types', icon: <Users className="h-4 w-4" /> },
-                { label: 'Routine placement', value: 'AM / PM — check product instructions', icon: <Zap className="h-4 w-4" /> },
-                { label: 'Size / Format', value: product.size ?? 'See product listing', icon: <Package className="h-4 w-4" /> },
-              ].map(({ label, value, icon }) => (
+              {getSummaryCards().map(({ label, value, icon }) => (
                 <div key={label} className="bg-card rounded-xl border border-border p-4 flex items-start gap-3">
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">{icon}</div>
                   <div>
@@ -661,7 +786,7 @@ const ProductDetail = () => {
               ))}
 
               {/* Key actives */}
-              {(product.ingredientBreakdown?.actives?.length ?? 0) > 0 && (
+              {hasActives && (
                 <div className="bg-card rounded-xl border border-border p-4 md:col-span-2">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -679,8 +804,8 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Pairs well / Do not mix */}
-              {(product.ingredientBreakdown?.actives?.length ?? 0) > 0 && (
+              {/* Pairs well / Do not mix — fix #1: only when actives exist */}
+              {hasActives && (
                 <>
                   <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">Pairs well with</p>
@@ -708,65 +833,62 @@ const ProductDetail = () => {
         </section>
 
         {/* ───────────────────────────────── ZONE 4 — INGREDIENTS ──── */}
-        <section id="ingredients" className="py-12 bg-background">
-          <div className="container px-4 md:px-6">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="font-display text-2xl font-semibold text-foreground">Ingredient Analysis</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {product.parsedIngredients.length} ingredients identified and categorised
-                </p>
+        {showIngredients && (
+          <section id="ingredients" className="py-12 bg-background">
+            <div className="container px-4 md:px-6">
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-2xl font-semibold text-foreground">Ingredient Analysis</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {product.parsedIngredients.length} ingredients identified and categorised
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Irritancy banner */}
-            <div className={cn('flex items-center gap-3 rounded-xl border px-4 py-3.5 mb-6', irritStyle.bg)}>
-              <AlertTriangle className={cn("h-5 w-5 shrink-0", irritStyle.icon)} />
-              <p className={cn("text-sm font-medium", irritStyle.text)}>{irritStyle.label}</p>
-            </div>
+              {/* Irritancy banner */}
+              {hasBreakdown && (
+                <div className={cn('flex items-center gap-3 rounded-xl border px-4 py-3.5 mb-6', irritStyle.bg)}>
+                  <AlertTriangle className={cn("h-5 w-5 shrink-0", irritStyle.icon)} />
+                  <p className={cn("text-sm font-medium", irritStyle.text)}>{irritStyle.label}</p>
+                </div>
+              )}
 
-            {/* Grouped ingredients */}
-            {Object.entries(product.ingredientGroups)
-              .filter(([, items]) => items.length > 0)
-              .map(([key, items]) => {
-                const meta = GROUP_META[key] ?? GROUP_META.other;
-                const isOpen = openIngGroup === key;
-                return (
-                  <div key={key} className="mb-3 rounded-2xl border border-border overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setOpenIngGroup(isOpen ? null : key)}
-                      className={cn('w-full flex items-center justify-between px-5 py-4 text-left transition-colors', isOpen ? 'bg-muted/50' : 'hover:bg-muted/30')}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn('flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold', meta.color)}>
-                          {meta.icon}
-                          {meta.label}
+              {/* Grouped ingredients */}
+              {Object.entries(product.ingredientGroups)
+                .filter(([, items]) => items.length > 0)
+                .map(([key, items]) => {
+                  const meta = GROUP_META[key] ?? GROUP_META.other;
+                  const isOpen = openIngGroup === key;
+                  return (
+                    <div key={key} className="mb-3 rounded-2xl border border-border overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setOpenIngGroup(isOpen ? null : key)}
+                        className={cn('w-full flex items-center justify-between px-5 py-4 text-left transition-colors', isOpen ? 'bg-muted/50' : 'hover:bg-muted/30')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn('flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold', meta.color)}>
+                            {meta.icon}
+                            {meta.label}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{items.length} ingredient{items.length !== 1 ? 's' : ''}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground">{items.length} ingredient{items.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                    </button>
+                        {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </button>
 
-                    {isOpen && (
-                      <div className="divide-y divide-border/60 bg-background">
-                        {items.map((ing: ParsedIngredient, i: number) => (
-                          <IngredientRow key={(ing.name || ing.canonicalName || '') + i} ing={ing} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-            {product.parsedIngredients.length === 0 && (
-              <div className="text-center py-12 bg-muted/20 rounded-2xl border border-border">
-                <FlaskConical className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">No ingredient data available for this product yet.</p>
-              </div>
-            )}
-          </div>
-        </section>
+                      {isOpen && (
+                        <div className="divide-y divide-border/60 bg-background">
+                          {items.map((ing: ParsedIngredient, i: number) => (
+                            <IngredientRow key={(ing.name || ing.canonicalName || '') + i} ing={ing} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          </section>
+        )}
 
         {/* ───────────────────────────────── ZONE 6 — DUPES ──── */}
         <section id="dupes" className="py-12 bg-secondary/20">
@@ -775,28 +897,44 @@ const ProductDetail = () => {
               <div>
                 <h2 className="font-display text-2xl font-semibold text-foreground">Ingredient-Matched Dupes</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {product.dupes.length} verified alternatives ranked by formula similarity
+                  {hasDupes
+                    ? `${product.dupes.length} verified alternatives ranked by formula similarity`
+                    : 'No dupes found yet for this product'}
                 </p>
               </div>
-              {/* Tier filter */}
-              <div className="flex items-center gap-1.5 bg-background rounded-xl border border-border p-1 self-start">
-                {(['all', 'budget', 'mid', 'premium'] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setDupeTier(t)}
-                    className={cn(
-                      'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors capitalize',
-                      dupeTier === t ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {t === 'all' ? 'All' : t === 'budget' ? 'Under ₹500' : t === 'mid' ? '₹500–1500' : 'Premium'}
-                  </button>
-                ))}
-              </div>
+              {/* Tier filter — fix #5: only show when dupes exist */}
+              {hasDupes && (
+                <div className="flex items-center gap-1.5 bg-background rounded-xl border border-border p-1 self-start">
+                  {(['all', 'budget', 'mid', 'premium'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setDupeTier(t)}
+                      className={cn(
+                        'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors capitalize',
+                        dupeTier === t ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {t === 'all' ? 'All' : t === 'budget' ? 'Under ₹500' : t === 'mid' ? '₹500–1500' : 'Premium'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {filteredDupes.length > 0 ? (
+            {/* Fix #5: Handle no dupes vs filtered empty */}
+            {!hasDupes ? (
+              <div className="text-center py-12 bg-background rounded-2xl border border-border">
+                <Zap className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground mb-3">No dupes found yet for this product.</p>
+                <Link
+                  to={`/browse?q=${encodeURIComponent(product.brand)}`}
+                  className="text-sm text-primary underline underline-offset-4"
+                >
+                  Find similar {product.brand} products
+                </Link>
+              </div>
+            ) : filteredDupes.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {filteredDupes.map((dupe) => (
                   <DupeCardCompact
@@ -861,109 +999,126 @@ const ProductDetail = () => {
         </section>
 
         {/* ───────────────────────────────── ZONE 7 — WORKS FOR ──── */}
-        <section id="worksfor" className="py-12 bg-background">
-          <div className="container px-4 md:px-6">
-            <h2 className="font-display text-2xl font-semibold text-foreground mb-8">Works For</h2>
+        {/* Fix #6: Hide for haircare, adapt for others */}
+        {showWorksFor && (
+          <section id="worksfor" className="py-12 bg-background">
+            <div className="container px-4 md:px-6">
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-8">Works For</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Skin types */}
-              {suitability && (
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" /> Skin Types
-                  </h3>
-                  <div className="space-y-3">
-                    {Object.entries(suitability).map(([type, score]) => (
-                      <div key={type}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium capitalize flex items-center gap-1.5">
-                            <span>{SKIN_TYPE_ICONS[type] ?? '🌿'}</span> {type}
-                          </span>
-                          <span className={cn('text-xs font-semibold', score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-red-500')}>
-                            {score >= 70 ? 'Great fit' : score >= 40 ? 'Suitable' : 'Avoid'}
-                          </span>
-                        </div>
-                        <Progress value={score} className="h-2" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Skin concerns + recommended for */}
-              <div className="space-y-4">
-                {product.skinTypeRecommendedFor?.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Skin types — fix #6: handle null suitability */}
+                {suitability ? (
                   <div className="bg-card rounded-2xl border border-border p-6">
-                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Best Suited For
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      {isMakeup ? 'Skin Tone & Type Compatibility' : 'Skin Types'}
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {product.skinTypeRecommendedFor.map((s) => (
-                        <span key={s} className="rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium px-3 py-1.5 capitalize">
-                          {SKIN_TYPE_ICONS[s.toLowerCase()] ?? '✓'} {s}
-                        </span>
+                    <div className="space-y-3">
+                      {Object.entries(suitability).map(([type, score]) => (
+                        <div key={type}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium capitalize flex items-center gap-1.5">
+                              <span>{SKIN_TYPE_ICONS[type] ?? '🌿'}</span> {type}
+                            </span>
+                            <span className={cn('text-xs font-semibold', score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-red-500')}>
+                              {score >= 70 ? 'Great fit' : score >= 40 ? 'Suitable' : 'Avoid'}
+                            </span>
+                          </div>
+                          <Progress value={score} className="h-2" />
+                        </div>
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <div className="bg-card rounded-2xl border border-border p-6">
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" /> Skin Types
+                    </h3>
+                    <p className="text-sm text-muted-foreground">Suitability data not available for this product.</p>
+                  </div>
                 )}
 
-                {/* Concerns list from actives */}
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" /> Key Skin Concerns Addressed
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {getConcernsFromActives(product.ingredientBreakdown?.actives ?? []).map((c) => (
-                      <span key={c.concern} className="rounded-full bg-secondary text-secondary-foreground text-sm font-medium px-3 py-1.5 capitalize flex items-center gap-1.5">
-                        <span>{c.icon}</span> {c.concern}
-                      </span>
-                    ))}
-                    {getConcernsFromActives(product.ingredientBreakdown?.actives ?? []).length === 0 && (
-                      <p className="text-sm text-muted-foreground">General skincare maintenance</p>
-                    )}
+                {/* Skin concerns + recommended for */}
+                <div className="space-y-4">
+                  {product.skinTypeRecommendedFor?.length > 0 && (
+                    <div className="bg-card rounded-2xl border border-border p-6">
+                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Best Suited For
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {product.skinTypeRecommendedFor.map((s) => (
+                          <span key={s} className="rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium px-3 py-1.5 capitalize">
+                            {SKIN_TYPE_ICONS[s.toLowerCase()] ?? '✓'} {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Concerns list from actives */}
+                  <div className="bg-card rounded-2xl border border-border p-6">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      {isMakeup ? 'Key Benefits' : 'Key Skin Concerns Addressed'}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {getConcernsFromActives(product.ingredientBreakdown?.actives ?? []).map((c) => (
+                        <span key={c.concern} className="rounded-full bg-secondary text-secondary-foreground text-sm font-medium px-3 py-1.5 capitalize flex items-center gap-1.5">
+                          <span>{c.icon}</span> {c.concern}
+                        </span>
+                      ))}
+                      {getConcernsFromActives(product.ingredientBreakdown?.actives ?? []).length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {isMakeup ? 'General cosmetic product' : 'General skincare maintenance'}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ───────────────────────────────── ZONE 8 — ETHICS ──── */}
-        <section id="ethics" className="py-12 bg-secondary/20">
-          <div className="container px-4 md:px-6">
-            <div className="mb-6">
-              <h2 className="font-display text-2xl font-semibold text-foreground mb-1">Ethics & Transparency</h2>
-              <p className="text-sm text-muted-foreground max-w-2xl">
-                Flags derived from ingredient analysis. Not all brands carry official certifications — here's what the formula tells us.
-              </p>
-            </div>
+        {/* Fix #8: Hide when all ethics values are null */}
+        {showEthics && (
+          <section id="ethics" className="py-12 bg-secondary/20">
+            <div className="container px-4 md:px-6">
+              <div className="mb-6">
+                <h2 className="font-display text-2xl font-semibold text-foreground mb-1">Ethics & Transparency</h2>
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  Flags derived from ingredient analysis. Not all brands carry official certifications — here's what the formula tells us.
+                </p>
+              </div>
 
-            {/* Ethics cards grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-              <EthicsCard label="Fragrance Free"   value={product.ethics.fragranceFree} />
-              <EthicsCard label="Alcohol Free"     value={product.ethics.alcoholFree} />
-              <EthicsCard label="Paraben Free"     value={product.ethics.parabenFree} />
-              <EthicsCard label="Silicone Free"    value={product.ethics.siliconeFree} />
-              <EthicsCard label="Fungal Acne Safe" value={product.ingredientBreakdown?.fungalAcneSafe ?? null} />
-              <EthicsCard label="Pregnancy Safe"   value={product.ingredientBreakdown?.pregnancySafe ?? null} />
-            </div>
+              {/* Ethics cards grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+                <EthicsCard label="Fragrance Free"   value={product.ethics.fragranceFree} />
+                <EthicsCard label="Alcohol Free"     value={product.ethics.alcoholFree} />
+                <EthicsCard label="Paraben Free"     value={product.ethics.parabenFree} />
+                <EthicsCard label="Silicone Free"    value={product.ethics.siliconeFree} />
+                <EthicsCard label="Fungal Acne Safe" value={product.ingredientBreakdown?.fungalAcneSafe ?? null} />
+                <EthicsCard label="Pregnancy Safe"   value={product.ingredientBreakdown?.pregnancySafe ?? null} />
+              </div>
 
-            {/* Available on + disclaimer row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              {product.platform && (
-                <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 self-start">
-                  <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground">Available on</span>
-                  <span className="text-sm font-semibold text-foreground capitalize">{product.platform}</span>
+              {/* Available on + disclaimer row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                {product.platform && (
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 self-start">
+                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground">Available on</span>
+                    <span className="text-sm font-semibold text-foreground capitalize">{product.platform}</span>
+                  </div>
+                )}
+                <div className="flex items-start gap-2 text-xs text-muted-foreground max-w-xl">
+                  <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <p>Ethics flags are automatically derived from the ingredient list. Manual verification by Skinevora editors is ongoing. Always read the product label for the most accurate information.</p>
                 </div>
-              )}
-              <div className="flex items-start gap-2 text-xs text-muted-foreground max-w-xl">
-                <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <p>Ethics flags are automatically derived from the ingredient list. Manual verification by Skinevora editors is ongoing. Always read the product label for the most accurate information.</p>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ───────────────────────────────── ZONE 9 — REVIEWS ──── */}
         <section id="reviews" className="py-12 bg-background">

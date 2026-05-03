@@ -4,8 +4,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-import { BookOpen, Clock, ChevronRight, Search } from "lucide-react";
+import { BookOpen, Clock, ChevronRight, Search, Mail, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { BLOG_POSTS } from "@/data/blogPosts";
 
 const BLOG_JSON_LD = {
@@ -25,6 +26,54 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 }
 
+function NewsletterSignup() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) setSubmitted(true);
+  };
+
+  return (
+    <section className="py-12 bg-gradient-to-br from-secondary to-primary/5">
+      <div className="container px-4 md:px-6 text-center">
+        <div className="mx-auto max-w-md">
+          <Mail className="mx-auto h-8 w-8 text-primary mb-3" />
+          <h2 className="font-display text-2xl font-semibold mb-2">Stay ingredient-literate</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            New guides every week. No sponsored content. Science first.
+          </p>
+          {submitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-2.5 text-sm font-semibold text-primary"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              You're in! We'll send you the good stuff.
+            </motion.div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex gap-2 max-w-sm mx-auto">
+              <Input
+                type="email"
+                required
+                placeholder="you@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-white/80 backdrop-blur flex-1"
+              />
+              <Button type="submit" className="rounded-full px-5 font-semibold shrink-0">
+                Subscribe
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const Blog = () => {
   const [query, setQuery] = useState("");
 
@@ -38,7 +87,7 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SEO
-        title="Blog & Ingredient Guides"
+        title="The Skin Edit — Ingredient Guides & Routines"
         description="Science-backed skincare guides, ingredient deep dives, and practical routine tips from Skinevora's editorial team."
         canonical="/blog"
         ogType="website"
@@ -62,7 +111,7 @@ const Blog = () => {
                 </span>
               </div>
               <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-                Blog & Guides
+                The Skin Edit
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
                 Ingredient deep dives, routine frameworks, and science-backed guidance — written to help you make better decisions with confidence.
@@ -175,22 +224,7 @@ const Blog = () => {
         </section>
 
         {/* Newsletter CTA */}
-        <section className="py-12 bg-gradient-to-br from-secondary to-primary/5">
-          <div className="container px-4 md:px-6 text-center">
-            <div className="mx-auto max-w-md">
-              <h2 className="font-display text-2xl font-semibold mb-2">Stay ingredient-literate</h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                New guides every week. No sponsored content. Science first.
-              </p>
-              <Link
-                to="/contact"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Get notified <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <NewsletterSignup />
 
       </main>
       <Footer />

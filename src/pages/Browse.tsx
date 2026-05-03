@@ -130,7 +130,7 @@ function useAllProducts(options: {
 const Browse = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const mode             = (searchParams.get("mode") as 'dupes' | 'products') || 'dupes';
+  const mode             = (searchParams.get("mode") as 'dupes' | 'products') || 'products';
   const categoryParam    = searchParams.get("category")    || undefined;
   const subcategoryParam = searchParams.get("subcategory") || undefined;
   const sortParam        = (searchParams.get("sort") as any) || "similarity";
@@ -163,7 +163,7 @@ const Browse = () => {
     search:   debouncedQuery,
     limit:    productLimit,
     category: categoryParam,
-    enabled:  mode === 'products',   // only fetch when in products mode
+    enabled:  mode === 'products',
   });
 
   // Reset limits when filters / mode change so we don't carry over a big limit
@@ -197,7 +197,7 @@ const Browse = () => {
 
   const setMode = (m: 'dupes' | 'products') => {
     const next = new URLSearchParams(searchParams);
-    if (m === 'dupes') next.delete('mode');       // default, keep URL clean
+    if (m === 'products') next.delete('mode');     // default, keep URL clean
     else next.set('mode', m);
     next.delete('sort');
     next.delete('subcategory');

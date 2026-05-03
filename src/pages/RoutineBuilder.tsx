@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Search, Plus, Trash2, Sun, Moon, Loader2, X,
   Sparkles, ChevronDown, CheckCircle2, CloudSun, Save,
+  Bell, Calendar, Flame, ArrowRightLeft, TrendingDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +27,97 @@ interface Product {
   imageUrl?: string;
   category: string;
   subcategory?: string;
+}
+
+// Extended slot with optional price
+interface ExtendedSlot extends ProfileRoutineSlot {
+  price?: number;
+}
+
+// ─── Routine Logs ────────────────────────────────────────────────────────────
+interface RoutineLogEntry {
+  date: string; // YYYY-MM-DD
+  morning: boolean;
+  night: boolean;
+}
+
+const LOGS_KEY = "skinevora.routine.logs.v1";
+const REMINDERS_KEY = "skinevora.routine.reminders.v1";
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function loadLogs(): RoutineLogEntry[] {
+  try {
+    const raw = localStorage.getItem(LOGS_KEY);
+    return raw ? (JSON.parse(raw) as RoutineLogEntry[]) : [];
+  } catch { return []; }
+}
+
+function saveLogs(logs: RoutineLogEntry[]) {
+  localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+}
+
+function calcStreak(logs: RoutineLogEntry[]): number {
+  const completed = new Set(
+    logs.filter((l) => l.morning || l.night).map((l) => l.date),
+  );
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const key = d.toISOString().slice(0, 10);
+    if (completed.has(key)) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+function getLast30Days(): string[] {
+  const days: string[] = [];
+  const d = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const t = new Date(d);
+    t.setDate(d.getDate() - i);
+    days.push(t.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+// ─── Reminders ───────────────────────────────────────────────────────────────
+interface ReminderPrefs {
+  amEnabled: boolean;
+  pmEnabled: boolean;
+  amTime: string; // "07:00"
+  pmTime: string; // "21:00"
+}
+
+function loadReminders(): ReminderPrefs {
+  try {
+    const raw = localStorage.getItem(REMINDERS_KEY);
+    if (raw) return JSON.parse(raw) as ReminderPrefs;
+  } catch {}
+  return { amEnabled: false, pmEnabled: false, amTime: "07:00", pmTime: "21:00" };
+}
+
+function saveReminders(prefs: ReminderPrefs) {
+  localStorage.setItem(REMINDERS_KEY, JSON.stringify(prefs));
+}
+
+// ─── Dupe types ──────────────────────────────────────────────────────────────
+interface DupeResult {
+  id: string;
+  similarityScore: number;
+  savingsPercent: number;
+  dupeProduct: {
+    id: string;
+    name: string;
+    brand: string;
+    price: number;
+    imageUrl?: string;
+  };
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -94,13 +186,25 @@ function SlotCard({
   slot,
   index,
   onRemove,
+  onSwap,
 }: {
-  slot: ProfileRoutineSlot;
+  slot: ExtendedSlot;
   index: number;
   onRemove: () => void;
+  onSwap: (dupe: DupeResult["dupeProduct"]) => void;
 }) {
   const stepMeta = STEPS.find((s) => s.value === slot.step);
   const colorClass = STEP_COLORS[slot.step] ?? STEP_COLORS.Other;
+  const [showDupes, setShowDupes] = useState(false);
+
+  const { data: dupes, isFetching: dupesFetching } = useQuery<DupeResult[]>({
+    queryKey: ["slot-dupes", slot.productId],
+    queryFn: () => api.get<DupeResult[]>(`/dupes/by-product/${slot.productId}`),
+    enabled: showDupes,
+    staleTime: 60_000,
+  });
+
+  const topDupes = (dupes ?? []).slice(0, 3);
 
   return (
     <motion.div
@@ -109,37 +213,103 @@ function SlotCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -8 }}
       transition={{ duration: 0.2 }}
-      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors"
+      className="group rounded-xl border border-border bg-card hover:border-primary/30 transition-colors"
     >
-      {/* Step number */}
-      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-        {index + 1}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${colorClass}`}>
-            {stepMeta?.emoji} {slot.step}
-          </span>
+      <div className="flex items-start gap-3 p-3">
+        {/* Step number */}
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+          {index + 1}
         </div>
-        <p className="mt-1 text-sm font-semibold text-foreground leading-tight">
-          {slot.productName}
-        </p>
-        {slot.notes && (
-          <p className="mt-0.5 text-xs text-muted-foreground italic">"{slot.notes}"</p>
-        )}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${colorClass}`}>
+              {stepMeta?.emoji} {slot.step}
+            </span>
+            {(slot as ExtendedSlot).price != null && (
+              <span className="text-[10px] font-semibold text-muted-foreground">
+                ₹{Number((slot as ExtendedSlot).price).toLocaleString("en-IN")}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm font-semibold text-foreground leading-tight">
+            {slot.productName}
+          </p>
+          {slot.notes && (
+            <p className="mt-0.5 text-xs text-muted-foreground italic">"{slot.notes}"</p>
+          )}
+          {/* Find cheaper alternative link */}
+          <button
+            type="button"
+            onClick={() => setShowDupes((v) => !v)}
+            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline underline-offset-2"
+          >
+            <TrendingDown className="h-3 w-3" />
+            {showDupes ? "Hide alternatives" : "Find cheaper alternative"}
+          </button>
+        </div>
+
+        {/* Remove */}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+          aria-label="Remove step"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      {/* Remove */}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
-        aria-label="Remove step"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {/* Dupes section */}
+      <AnimatePresence>
+        {showDupes && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border px-3 pb-3 pt-2 space-y-1.5">
+              {dupesFetching && (
+                <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Finding alternatives...
+                </div>
+              )}
+              {!dupesFetching && topDupes.length === 0 && (
+                <p className="text-xs text-muted-foreground py-1">No cheaper alternatives found.</p>
+              )}
+              {topDupes.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">{d.dupeProduct.name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {d.dupeProduct.brand} · ₹{Number(d.dupeProduct.price).toLocaleString("en-IN")}
+                      {d.savingsPercent > 0 && (
+                        <span className="ml-1 text-emerald-600 font-semibold">
+                          {d.savingsPercent}% cheaper
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onSwap(d.dupeProduct)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <ArrowRightLeft className="h-2.5 w-2.5" />
+                    Swap
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -311,6 +481,9 @@ const RoutineBuilder = () => {
   const [routine, setRoutine]  = useState<ProfileRoutineData>(emptyRoutine);
   const [activeTab, setActiveTab] = useState<"morning" | "night">("morning");
 
+  const [logs, setLogs] = useState<RoutineLogEntry[]>(loadLogs);
+  const [reminders, setReminders] = useState<ReminderPrefs>(loadReminders);
+
   const hydratedRef        = useRef(false);
   const lastUserIdRef      = useRef<string | null>(null);
   const lastSavedRef       = useRef("");
@@ -368,12 +541,13 @@ const RoutineBuilder = () => {
       toast({ title: "Select a product first", variant: "destructive" });
       return;
     }
-    const slot: ProfileRoutineSlot = {
+    const slot: ExtendedSlot = {
       id: `${selectedProduct.id}-${Date.now()}`,
       step,
       productId: selectedProduct.id,
       productName: `${selectedProduct.brand} ${selectedProduct.name}`,
       notes: notes.trim(),
+      price: selectedProduct.price || undefined,
     };
     setRoutine((prev) => ({ ...prev, [period]: [...prev[period], slot] }));
     setSelectedProduct(null);
@@ -391,6 +565,103 @@ const RoutineBuilder = () => {
   };
 
   const totalSteps = routine.morning.length + routine.night.length;
+
+  // ── Total routine cost ────────────────────────────────────────────────────
+  const totalCost = [...routine.morning, ...routine.night].reduce(
+    (sum, s) => sum + ((s as ExtendedSlot).price ?? 0), 0,
+  );
+
+  // ── Routine logs ──────────────────────────────────────────────────────────
+  const today = todayStr();
+  const todayLog = logs.find((l) => l.date === today);
+  const streak = calcStreak(logs);
+  const last30 = getLast30Days();
+  const completedDates = new Set(logs.filter((l) => l.morning || l.night).map((l) => l.date));
+
+  const toggleLog = useCallback((period: "morning" | "night") => {
+    setLogs((prev) => {
+      const existing = prev.find((l) => l.date === today);
+      let next: RoutineLogEntry[];
+      if (existing) {
+        next = prev.map((l) =>
+          l.date === today ? { ...l, [period]: !l[period] } : l,
+        );
+      } else {
+        next = [...prev, { date: today, morning: period === "morning", night: period === "night" }];
+      }
+      saveLogs(next);
+      return next;
+    });
+  }, [today]);
+
+  // ── Reminders scheduling ──────────────────────────────────────────────────
+  const scheduleNotification = useCallback((label: string, timeStr: string) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    const now = new Date();
+    const target = new Date(now);
+    target.setHours(h, m, 0, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    const ms = target.getTime() - now.getTime();
+    return setTimeout(() => {
+      if (Notification.permission === "granted") {
+        new Notification("Skinevora Routine Reminder", {
+          body: `Time for your ${label} skincare routine!`,
+          icon: "/favicon.ico",
+        });
+      }
+    }, ms);
+  }, []);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    if (reminders.amEnabled) timers.push(scheduleNotification("morning", reminders.amTime));
+    if (reminders.pmEnabled) timers.push(scheduleNotification("night", reminders.pmTime));
+    return () => timers.forEach(clearTimeout);
+  }, [reminders, scheduleNotification]);
+
+  const toggleReminder = useCallback((which: "am" | "pm") => {
+    const key = which === "am" ? "amEnabled" : "pmEnabled";
+    const newVal = !reminders[key];
+    if (newVal && typeof Notification !== "undefined") {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((perm) => {
+          if (perm === "denied") {
+            toast({ title: "Notification permission denied", variant: "destructive" });
+          }
+        });
+      } else if (Notification.permission === "denied") {
+        toast({ title: "Notifications blocked — enable in browser settings", variant: "destructive" });
+        return;
+      }
+    } else if (newVal && typeof Notification === "undefined") {
+      toast({ title: "Browser notifications not supported", variant: "destructive" });
+      return;
+    }
+    const updated = { ...reminders, [key]: newVal };
+    setReminders(updated);
+    saveReminders(updated);
+  }, [reminders, toast]);
+
+  // ── Swap handler ──────────────────────────────────────────────────────────
+  const swapProduct = useCallback(
+    (bucket: "morning" | "night", slotId: string, dupe: DupeResult["dupeProduct"]) => {
+      setRoutine((prev) => ({
+        ...prev,
+        [bucket]: prev[bucket].map((s) =>
+          s.id === slotId
+            ? {
+                ...s,
+                productId: dupe.id,
+                productName: `${dupe.brand} ${dupe.name}`,
+                price: dupe.price,
+              } as ExtendedSlot
+            : s,
+        ),
+      }));
+      toast({ title: `Swapped to ${dupe.brand} ${dupe.name} ✓` });
+    },
+    [toast],
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -580,6 +851,11 @@ const RoutineBuilder = () => {
                         <span className="text-xs font-semibold text-primary">{totalSteps} total steps</span>
                       </div>
                     )}
+                    {totalCost > 0 && (
+                      <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5">
+                        <span className="text-xs font-semibold text-emerald-700">₹{totalCost.toLocaleString("en-IN")} total</span>
+                      </div>
+                    )}
                   </div>
                   {totalSteps > 0 && (
                     <Button
@@ -592,6 +868,76 @@ const RoutineBuilder = () => {
                       Clear all
                     </Button>
                   )}
+                </div>
+
+                {/* ── Routine Log Section ──────────────────────────── */}
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Daily Log</span>
+                    </div>
+                    {streak > 0 && (
+                      <div className="flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5">
+                        <Flame className="h-3 w-3 text-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-700">{streak} day streak</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mark as done buttons */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleLog("morning")}
+                      className={`flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-semibold transition-all ${
+                        todayLog?.morning
+                          ? "border-amber-300 bg-amber-50 text-amber-700"
+                          : "border-border bg-background text-muted-foreground hover:bg-secondary/40"
+                      }`}
+                    >
+                      <Sun className="h-3.5 w-3.5" />
+                      {todayLog?.morning ? "AM Done ✓" : "Mark AM Done"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleLog("night")}
+                      className={`flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-semibold transition-all ${
+                        todayLog?.night
+                          ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                          : "border-border bg-background text-muted-foreground hover:bg-secondary/40"
+                      }`}
+                    >
+                      <Moon className="h-3.5 w-3.5" />
+                      {todayLog?.night ? "PM Done ✓" : "Mark PM Done"}
+                    </button>
+                  </div>
+
+                  {/* 30-day calendar grid */}
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1.5">Last 30 days</p>
+                    <div className="grid grid-cols-7 gap-1">
+                      {last30.map((d) => {
+                        const done = completedDates.has(d);
+                        const isToday = d === today;
+                        return (
+                          <div
+                            key={d}
+                            title={d}
+                            className={`h-5 w-full rounded-sm flex items-center justify-center text-[8px] font-bold ${
+                              done
+                                ? "bg-emerald-400 text-white"
+                                : isToday
+                                  ? "border border-primary/40 bg-primary/5 text-primary"
+                                  : "bg-muted/50 text-muted-foreground/40"
+                            }`}
+                          >
+                            {new Date(d).getDate()}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* AM / PM tabs */}
@@ -638,9 +984,10 @@ const RoutineBuilder = () => {
                           {routine[activeTab].map((slot, i) => (
                             <SlotCard
                               key={slot.id}
-                              slot={slot}
+                              slot={slot as ExtendedSlot}
                               index={i}
                               onRemove={() => removeSlot(activeTab, slot.id)}
+                              onSwap={(dupe) => swapProduct(activeTab, slot.id, dupe)}
                             />
                           ))}
                         </AnimatePresence>
@@ -660,6 +1007,63 @@ const RoutineBuilder = () => {
                     </p>
                   </div>
                 )}
+
+                {/* ── Reminders Section ──────────────────────────────── */}
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reminders</span>
+                  </div>
+                  <div className="space-y-2">
+                    {/* AM reminder */}
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Sun className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-semibold text-foreground">Morning</span>
+                        <span className="text-[10px] text-muted-foreground">{reminders.amTime.replace(":", ":")} AM</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleReminder("am")}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          reminders.amEnabled ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                            reminders.amEnabled ? "translate-x-[18px]" : "translate-x-[3px]"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    {/* PM reminder */}
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                        <span className="text-xs font-semibold text-foreground">Night</span>
+                        <span className="text-[10px] text-muted-foreground">{reminders.pmTime.replace(":", ":")} PM</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleReminder("pm")}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          reminders.pmEnabled ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                            reminders.pmEnabled ? "translate-x-[18px]" : "translate-x-[3px]"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                  {(reminders.amEnabled || reminders.pmEnabled) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Keep this tab open to receive notifications.
+                    </p>
+                  )}
+                </div>
 
               </div>
             </div>

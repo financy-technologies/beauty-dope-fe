@@ -733,6 +733,12 @@ export default function SkinStory() {
     return new Set(Object.keys(local) as SectionId[]);
   });
   const [insights, setInsights] = useState<QuizInsights | null>(null);
+  const [previousResults, setPreviousResults] = useState<QuizInsights | null>(() => {
+    try {
+      const raw = localStorage.getItem('skinevora_skin_story_results');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -824,9 +830,10 @@ export default function SkinStory() {
     if (nextIdx < QUIZ_SECTIONS.length) {
       startSection(nextIdx);
     } else {
-      // All sections done
       const computed = insights ?? computeInsights(answers);
       setInsights(computed);
+      setPreviousResults(computed);
+      try { localStorage.setItem('skinevora_skin_story_results', JSON.stringify(computed)); } catch { /* ignore */ }
       setView('results');
     }
   };
@@ -834,10 +841,18 @@ export default function SkinStory() {
   const handleViewResults = () => {
     const computed = computeInsights(answers);
     setInsights(computed);
+    setPreviousResults(computed);
+    try { localStorage.setItem('skinevora_skin_story_results', JSON.stringify(computed)); } catch { /* ignore */ }
     setView('results');
   };
 
   const handleRetake = () => {
+    // Preserve previous results so the user can still view them
+    if (insights) {
+      try {
+        localStorage.setItem('skinevora_skin_story_results', JSON.stringify(insights));
+      } catch { /* ignore */ }
+    }
     setAnswers({});
     setDoneSections(new Set());
     setInsights(null);
@@ -905,6 +920,24 @@ export default function SkinStory() {
                       variant="outline"
                       className="border-teal-300 text-teal-600 text-xs h-7"
                       onClick={handleViewResults}
+                    >
+                      View results
+                    </Button>
+                  </div>
+                )}
+
+                {/* Previous results available (after retake) */}
+                {doneSections.size === 0 && previousResults && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-slate-700">Previous results available</p>
+                      <p className="text-xs text-slate-500">You can view your last Skin Story results anytime</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-300 text-slate-600 text-xs h-7"
+                      onClick={() => { setInsights(previousResults); setView('results'); }}
                     >
                       View results
                     </Button>
@@ -1158,7 +1191,7 @@ export default function SkinStory() {
                 <Results
                   insights={insights}
                   onRetake={handleRetake}
-                  onBrowse={() => navigate('/browse')}
+                  onBrowse={() => navigate(`/browse?mode=products&skin_type=${encodeURIComponent(insights!.skinType)}`)}
                 />
               </motion.div>
             )}

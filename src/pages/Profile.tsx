@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useMyProfile, useUpdateProfile } from "@/hooks/api/useProfile";
+import { useGetSkinStory } from "@/hooks/api/useSkinStory";
 import {
   useMyPoints,
   usePointsHistory,
@@ -22,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useSignInModal, GuestWall } from "@/components/auth/SignInModal";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   User,
   Sparkles,
@@ -37,7 +39,13 @@ import {
   History,
   ChevronRight,
   AlertCircle,
+  Leaf,
+  AlertTriangle,
+  ArrowRight,
+  PiggyBank,
+  IndianRupee,
 } from "lucide-react";
+import { useFavoritesDupes } from "@/hooks/api/useFavorites";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -108,7 +116,7 @@ function getNextMilestone(points: number) {
 
 function ProfileTab() {
   const { user } = useAuth();
-  const { data: profile, isLoading } = useMyProfile();
+  const { data: profile, isLoading, isError, refetch } = useMyProfile();
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
 
@@ -142,6 +150,34 @@ function ProfileTab() {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError || (!isLoading && !profile)) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-5">
+              <Avatar className="h-20 w-20 border-2 border-primary/20">
+                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+                  {(user?.email ?? "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-xl font-semibold text-foreground truncate">
+                  {user?.email}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Profile data could not be loaded.</p>
+                <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => refetch()}>
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -250,12 +286,185 @@ function ProfileTab() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Savings tracker */}
+      <SavingsTracker />
     </div>
   );
 }
 
+function SavingsTracker() {
+  const { data: favDupes, isLoading } = useFavoritesDupes();
+
+  if (isLoading || !favDupes || favDupes.length === 0) return null;
+
+  const totalSaved = favDupes.reduce((sum, d) => {
+    const diff = (d.original?.price ?? 0) - (d.dupe?.price ?? 0);
+    return sum + Math.max(0, diff);
+  }, 0);
+
+  const avgSavings = favDupes.length > 0 ? Math.round(totalSaved / favDupes.length) : 0;
+
+  return (
+    <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100">
+            <PiggyBank className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Your Savings Tracker</p>
+            <p className="text-xs text-muted-foreground">Based on your {favDupes.length} saved dupe{favDupes.length !== 1 ? "s" : ""}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-white/70 border border-green-200 px-4 py-3 text-center">
+            <div className="flex items-center justify-center gap-0.5">
+              <IndianRupee className="h-4 w-4 text-green-600" />
+              <p className="font-display text-2xl font-bold text-green-700">{totalSaved.toLocaleString("en-IN")}</p>
+            </div>
+            <p className="text-[10px] text-green-600 font-medium mt-0.5">Total Saved</p>
+          </div>
+          <div className="rounded-xl bg-white/70 border border-green-200 px-4 py-3 text-center">
+            <div className="flex items-center justify-center gap-0.5">
+              <IndianRupee className="h-4 w-4 text-green-600" />
+              <p className="font-display text-2xl font-bold text-green-700">{avgSavings.toLocaleString("en-IN")}</p>
+            </div>
+            <p className="text-[10px] text-green-600 font-medium mt-0.5">Avg per Dupe</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SkinStoryCard() {
+  const { data: storyData, isLoading } = useGetSkinStory();
+
+  // Also check localStorage for non-API results
+  const localInsights = (() => {
+    try {
+      const raw = localStorage.getItem('skinevora_skin_story_results');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+
+  const insights = storyData?.insights ?? localInsights;
+
+  if (isLoading) return null;
+  if (!insights) {
+    return (
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/2">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Take your Skin Story quiz</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Get a deep analysis of your skin, hair, and biology — plus personalised ingredient recommendations.
+              </p>
+              <Button size="sm" className="mt-3 gap-1.5" asChild>
+                <Link to="/skin-story">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Start Skin Story
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const skinTypeLabel: Record<string, string> = {
+    dry: 'Dry', oily: 'Oily', combination: 'Combination', normal: 'Normal', sensitive: 'Sensitive',
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="bg-gradient-to-r from-rose-50 to-pink-50 px-5 py-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-rose-400 font-semibold uppercase tracking-wide mb-0.5">Skin Story Results</p>
+            <h3 className="text-lg font-bold text-foreground">
+              {skinTypeLabel[insights.skinType] ?? insights.skinType} Skin
+              {insights.isSensitive ? ' + Sensitive' : ''}
+            </h3>
+          </div>
+          <span className="text-2xl">✨</span>
+        </div>
+      </div>
+      <CardContent className="pt-4 space-y-4">
+        {/* Quick stats */}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: "Barrier Health", value: insights.barrierHealth },
+            { label: "Acne Risk", value: insights.acneRisk },
+            { label: "Sensitivity", value: insights.sensitivityLevel },
+            { label: "Pigmentation", value: insights.pigmentationLevel },
+          ].map((item) => (
+            <div key={item.label} className="rounded-lg bg-secondary/60 px-3 py-2 text-center">
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-sm font-semibold capitalize">{String(item.value).replace(/-/g, ' ')}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Concerns */}
+        {insights.primaryConcerns?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Top Concerns</p>
+            <div className="flex flex-wrap gap-1.5">
+              {insights.primaryConcerns.map((c: string) => (
+                <Badge key={c} variant="secondary" className="text-xs rounded-full bg-primary/10 text-primary border-0">
+                  {c.replace(/_/g, ' ')}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Ingredients */}
+        {insights.ingredientsToSeek?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-emerald-600 mb-1.5 flex items-center gap-1">
+              <Leaf className="h-3 w-3" /> Ingredients to seek
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {insights.ingredientsToSeek.map((i: string) => (
+                <Badge key={i} className="bg-emerald-50 text-emerald-700 border-0 text-xs">{i}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+        {insights.ingredientsToAvoid?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-red-500 mb-1.5 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" /> Ingredients to avoid
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {insights.ingredientsToAvoid.map((i: string) => (
+                <Badge key={i} className="bg-red-50 text-red-600 border-0 text-xs">{i}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Button variant="outline" size="sm" className="w-full gap-1.5" asChild>
+          <Link to="/skin-story">
+            View full Skin Story
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SkinTab() {
-  const { data: profile, isLoading } = useMyProfile();
+  const { data: profile, isLoading, isError } = useMyProfile();
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
 
@@ -309,6 +518,19 @@ function SkinTab() {
   if (!editing) {
     return (
       <div className="space-y-5">
+        {/* Skin Story results */}
+        <SkinStoryCard />
+
+        {/* Error fallback */}
+        {isError && (
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardContent className="pt-5">
+              <p className="text-sm text-amber-800 font-medium">Could not load your skin profile from the server.</p>
+              <p className="text-xs text-amber-700 mt-1">You can still set up your skin profile below.</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Banner if not set */}
         {!profile?.skinType && (
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 flex items-start gap-3">

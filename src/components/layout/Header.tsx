@@ -118,7 +118,7 @@ const Header = () => {
   const navLinks = [
     { name: "Skincare",  href: "/browse?category=skin" },
     { name: "Makeup",    href: "/browse?category=makeup" },
-    { name: "Blog",      href: "/blog" },
+    { name: "Skin Edit",  href: "/blog" },
     { name: "Trending",  href: "/browse?sort=trending" },
   ];
 

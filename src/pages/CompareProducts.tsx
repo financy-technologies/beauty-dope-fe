@@ -3,12 +3,13 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
-import { GitCompareArrows, Search, X, CheckCircle2, AlertTriangle, Plus, Loader2 } from "lucide-react";
+import { GitCompareArrows, Search, X, CheckCircle2, AlertTriangle, Plus, Loader2, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/integrations/api/client";
+import INGREDIENT_DB from "@/data/ingredientDb";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Product {
@@ -19,47 +20,69 @@ interface Product {
   category: string;
   subcategory?: string;
   description?: string;
-  imageUrl?: string;      // camelCase — matches entity field name
+  imageUrl?: string;
   ingredients?: string;
 }
 
 // ─── Ingredient helpers ───────────────────────────────────────────────────────
-const BENEFICIAL = new Set([
-  "niacinamide", "hyaluronic acid", "retinol", "vitamin c", "ascorbic acid",
-  "ceramide", "ceramides", "peptides", "zinc oxide", "titanium dioxide",
-  "squalane", "azelaic acid", "tranexamic acid", "bakuchiol", "alpha arbutin",
-  "panthenol", "allantoin", "caffeine", "centella asiatica",
-]);
-const CAUTION = new Set([
-  "fragrance", "alcohol denat", "parabens", "sodium lauryl sulfate", "sls",
-  "mineral oil", "dimethicone", "glycolic acid", "lactic acid",
-]);
+const DB_KEYS = Object.keys(INGREDIENT_DB);
 
-function categoriseIngredients(raw: string) {
-  const list = raw
+function normalize(s: string): string {
+  return s.toLowerCase()
+    .replace(/[®™©]/g, "")
+    .replace(/\s*\(.*?\)\s*/g, " ")
+    .replace(/\d+(\.\d+)?%/g, "")
+    .replace(/[^a-z0-9 /\-,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function lookupIngredient(raw: string) {
+  const key = normalize(raw);
+  if (!key) return null;
+  if (INGREDIENT_DB[key]) return { key, info: INGREDIENT_DB[key] };
+  const withoutTrailing = key.replace(/\s+\w{1,3}$/, "");
+  if (withoutTrailing !== key && INGREDIENT_DB[withoutTrailing]) return { key: withoutTrailing, info: INGREDIENT_DB[withoutTrailing] };
+  for (const dbKey of DB_KEYS) {
+    if (dbKey.length >= 4 && (key.includes(dbKey) || dbKey.includes(key))) {
+      return { key: dbKey, info: INGREDIENT_DB[dbKey] };
+    }
+  }
+  return null;
+}
+
+interface ParsedIng {
+  raw: string;
+  normalized: string;
+  rating: "good" | "caution" | "avoid" | "unknown";
+  category?: string;
+}
+
+function parseIngredientList(raw: string): ParsedIng[] {
+  return raw
     .split(/,|\n/)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  const beneficial: string[] = [];
-  const caution: string[] = [];
-  const neutral: string[] = [];
-  list.forEach((ing) => {
-    if (BENEFICIAL.has(ing)) beneficial.push(ing);
-    else if (CAUTION.has(ing)) caution.push(ing);
-    else neutral.push(ing);
-  });
-  return { beneficial, caution, neutral, all: list };
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((r) => {
+      const match = lookupIngredient(r);
+      return {
+        raw: r,
+        normalized: normalize(r),
+        rating: match?.info.rating ?? "unknown" as const,
+        category: match?.info.category,
+      };
+    });
 }
 
-function sharedIngredients(a: string[], b: string[]) {
-  const setB = new Set(b);
-  return a.filter((i) => setB.has(i));
+function sharedIngredients(a: ParsedIng[], b: ParsedIng[]) {
+  const setB = new Set(b.map((i) => i.normalized));
+  return a.filter((i) => setB.has(i.normalized));
 }
 
-function similarity(a: string[], b: string[]) {
+function similarity(a: ParsedIng[], b: ParsedIng[]) {
   if (!a.length || !b.length) return 0;
   const shared = sharedIngredients(a, b).length;
-  const union = new Set([...a, ...b]).size;
+  const union = new Set([...a.map((i) => i.normalized), ...b.map((i) => i.normalized)]).size;
   return Math.round((shared / union) * 100);
 }
 
@@ -110,10 +133,8 @@ function ProductSlot({
 
   // ── Filled slot ──────────────────────────────────────────────────────────────
   if (product) {
-    const ing = product.ingredients ? categoriseIngredients(product.ingredients) : null;
     return (
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        {/* Header */}
         <div className="relative bg-secondary/30 px-5 pt-5 pb-4">
           <button
             onClick={onRemove}
@@ -152,53 +173,11 @@ function ProductSlot({
             )}
           </div>
         </div>
-
-        {/* Details */}
-        <div className="px-5 py-4 space-y-4">
-          {product.description && (
+        {product.description && (
+          <div className="px-5 py-3">
             <p className="text-xs text-muted-foreground leading-relaxed">{product.description}</p>
-          )}
-          {ing && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Ingredient Profile
-              </p>
-              {ing.beneficial.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-xs font-medium text-green-700">Beneficial actives</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {ing.beneficial.map((i) => (
-                      <span key={i} className="rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[11px] text-green-700 capitalize">
-                        {i}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {ing.caution.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                    <span className="text-xs font-medium text-amber-700">Caution ingredients</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {ing.caution.map((i) => (
-                      <span key={i} className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] text-amber-700 capitalize">
-                        {i}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {ing.all.length} total ingredients
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -338,16 +317,28 @@ const CompareProducts = () => {
     });
   };
 
-  // Similarity between first two filled products
   const filled = products.filter(Boolean) as Product[];
+  const canCompare = filled.length >= 2;
+
+  const parsedLists = filled.map((p) =>
+    p.ingredients ? parseIngredientList(p.ingredients) : []
+  );
+  const bothHaveIngredients = canCompare && parsedLists[0].length > 0 && parsedLists[1].length > 0;
+
   let simScore: number | null = null;
-  let sharedIngs: string[] = [];
-  if (filled.length >= 2 && filled[0].ingredients && filled[1].ingredients) {
-    const a = categoriseIngredients(filled[0].ingredients).all;
-    const b = categoriseIngredients(filled[1].ingredients).all;
-    simScore = similarity(a, b);
-    sharedIngs = sharedIngredients(a, b);
+  let sharedIngs: ParsedIng[] = [];
+  let uniqueA: ParsedIng[] = [];
+  let uniqueB: ParsedIng[] = [];
+  if (bothHaveIngredients) {
+    simScore = similarity(parsedLists[0], parsedLists[1]);
+    sharedIngs = sharedIngredients(parsedLists[0], parsedLists[1]);
+    const sharedSet = new Set(sharedIngs.map((i) => i.normalized));
+    uniqueA = parsedLists[0].filter((i) => !sharedSet.has(i.normalized));
+    uniqueB = parsedLists[1].filter((i) => !sharedSet.has(i.normalized));
   }
+
+  const priceDiff = canCompare ? Math.abs(filled[0].price - filled[1].price) : 0;
+  const cheaperIdx = canCompare ? (filled[0].price <= filled[1].price ? 0 : 1) : 0;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -391,55 +382,6 @@ const CompareProducts = () => {
         <section className="py-12 md:py-16">
           <div className="container px-4 md:px-6">
 
-            {/* Similarity banner */}
-            <AnimatePresence>
-              {simScore !== null && (
-                <motion.div
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 flex flex-col sm:flex-row items-center gap-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-16 w-16 flex-shrink-0">
-                      <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-border" />
-                        <circle
-                          cx="18" cy="18" r="15.9" fill="none"
-                          stroke="currentColor" strokeWidth="3"
-                          strokeDasharray={`${simScore} ${100 - simScore}`}
-                          className="text-primary transition-all duration-700"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center font-display text-lg font-bold text-primary">
-                        {simScore}%
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Ingredient Similarity</p>
-                      <p className="text-sm text-muted-foreground">
-                        {sharedIngs.length} shared ingredient{sharedIngs.length !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </div>
-                  {sharedIngs.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 flex-1">
-                      {sharedIngs.slice(0, 12).map((ing) => (
-                        <span key={ing} className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary capitalize">
-                          {ing}
-                        </span>
-                      ))}
-                      {sharedIngs.length > 12 && (
-                        <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] text-primary">
-                          +{sharedIngs.length - 12} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <div className={`grid gap-5 ${
               products.length === 2
                 ? "grid-cols-1 sm:grid-cols-2"
@@ -472,6 +414,229 @@ const CompareProducts = () => {
                 </Button>
               </div>
             )}
+
+            {/* ── Comparison Results ─────────────────────────────────────── */}
+            <AnimatePresence>
+              {canCompare && (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="mt-10 space-y-6"
+                >
+                  <h2 className="font-display text-xl font-semibold text-foreground text-center">
+                    Comparison Results
+                  </h2>
+
+                  {/* Price comparison */}
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Price Comparison</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {filled.slice(0, 2).map((p, i) => (
+                        <div key={p.id} className={`rounded-xl p-4 text-center ${i === cheaperIdx ? "bg-green-50 border border-green-200" : "bg-secondary/30 border border-border"}`}>
+                          <p className="text-xs text-muted-foreground truncate">{p.brand}</p>
+                          <p className="text-sm font-semibold truncate">{p.name}</p>
+                          <p className="font-display text-2xl font-bold mt-1 text-primary">
+                            ₹{p.price.toLocaleString("en-IN")}
+                          </p>
+                          {i === cheaperIdx && priceDiff > 0 && (
+                            <Badge className="mt-2 bg-green-100 text-green-700 border-green-200 text-xs">
+                              Cheaper by ₹{priceDiff.toLocaleString("en-IN")}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {priceDiff > 0 && (
+                      <p className="text-xs text-muted-foreground text-center mt-3">
+                        You save {Math.round((priceDiff / filled[1 - cheaperIdx].price) * 100)}% by choosing {filled[cheaperIdx].brand} {filled[cheaperIdx].name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Category & type comparison */}
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Product Details</h3>
+                    <div className="divide-y divide-border">
+                      {[
+                        { label: "Brand", values: filled.slice(0, 2).map((p) => p.brand) },
+                        { label: "Category", values: filled.slice(0, 2).map((p) => p.category) },
+                        { label: "Subcategory", values: filled.slice(0, 2).map((p) => p.subcategory || "—") },
+                        { label: "Ingredients listed", values: filled.slice(0, 2).map((_, i) => parsedLists[i]?.length ? `${parsedLists[i].length}` : "Not available") },
+                      ].map(({ label, values }) => (
+                        <div key={label} className="grid grid-cols-[120px_1fr_1fr] gap-3 py-3 items-center">
+                          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                          <span className={`text-sm ${values[0] === values[1] ? "text-foreground" : "font-semibold text-foreground"}`}>
+                            {values[0]}
+                          </span>
+                          <span className={`text-sm ${values[0] === values[1] ? "text-foreground" : "font-semibold text-foreground"}`}>
+                            {values[1]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ingredient similarity */}
+                  {bothHaveIngredients && (
+                    <>
+                      <div className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative h-16 w-16 flex-shrink-0">
+                            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                              <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-border" />
+                              <circle
+                                cx="18" cy="18" r="15.9" fill="none"
+                                stroke="currentColor" strokeWidth="3"
+                                strokeDasharray={`${simScore} ${100 - simScore!}`}
+                                className="text-primary transition-all duration-700"
+                              />
+                            </svg>
+                            <span className="absolute inset-0 flex items-center justify-center font-display text-lg font-bold text-primary">
+                              {simScore}%
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">Ingredient Similarity</p>
+                            <p className="text-sm text-muted-foreground">
+                              {sharedIngs.length} shared · {uniqueA.length} unique to Product 1 · {uniqueB.length} unique to Product 2
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Shared ingredients */}
+                      {sharedIngs.length > 0 && (
+                        <div className="rounded-2xl border border-border bg-card p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <GitCompareArrows className="h-4 w-4 text-primary" />
+                            <h3 className="text-sm font-semibold text-foreground">
+                              Shared Ingredients ({sharedIngs.length})
+                            </h3>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sharedIngs.map((ing) => (
+                              <span
+                                key={ing.normalized}
+                                className={`rounded-full px-2.5 py-1 text-[11px] font-medium capitalize border ${
+                                  ing.rating === "good"
+                                    ? "bg-green-50 border-green-200 text-green-700"
+                                    : ing.rating === "caution"
+                                    ? "bg-amber-50 border-amber-200 text-amber-700"
+                                    : ing.rating === "avoid"
+                                    ? "bg-red-50 border-red-200 text-red-700"
+                                    : "bg-secondary/50 border-border text-muted-foreground"
+                                }`}
+                              >
+                                {ing.raw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Unique to each product */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {[
+                          { label: filled[0].name, items: uniqueA },
+                          { label: filled[1].name, items: uniqueB },
+                        ].map(({ label, items }, idx) => (
+                          <div key={idx} className="rounded-2xl border border-border bg-card p-5">
+                            <div className="flex items-center gap-2 mb-3">
+                              <FlaskConical className="h-4 w-4 text-primary" />
+                              <h3 className="text-sm font-semibold text-foreground truncate">
+                                Only in {label}
+                              </h3>
+                              <Badge variant="outline" className="text-[10px] ml-auto flex-shrink-0">
+                                {items.length}
+                              </Badge>
+                            </div>
+                            {items.length === 0 ? (
+                              <p className="text-xs text-muted-foreground">No unique ingredients</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5">
+                                {items.map((ing) => (
+                                  <span
+                                    key={ing.normalized}
+                                    className={`rounded-full px-2 py-0.5 text-[11px] capitalize border ${
+                                      ing.rating === "good"
+                                        ? "bg-green-50 border-green-200 text-green-700"
+                                        : ing.rating === "caution"
+                                        ? "bg-amber-50 border-amber-200 text-amber-700"
+                                        : ing.rating === "avoid"
+                                        ? "bg-red-50 border-red-200 text-red-700"
+                                        : "bg-secondary/50 border-border text-muted-foreground"
+                                    }`}
+                                  >
+                                    {ing.raw}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quick summary */}
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <h3 className="text-sm font-semibold text-foreground mb-4">Ingredient Breakdown</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          {filled.slice(0, 2).map((p, i) => {
+                            const ings = parsedLists[i];
+                            const good = ings.filter((x) => x.rating === "good").length;
+                            const caution = ings.filter((x) => x.rating === "caution").length;
+                            const avoid = ings.filter((x) => x.rating === "avoid").length;
+                            return (
+                              <div key={p.id} className="space-y-2">
+                                <p className="text-xs font-semibold truncate">{p.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                                  <div className="flex-1 bg-secondary/40 rounded-full h-2">
+                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(good / ings.length) * 100}%` }} />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground w-6 text-right">{good}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                                  <div className="flex-1 bg-secondary/40 rounded-full h-2">
+                                    <div className="bg-amber-400 h-2 rounded-full" style={{ width: `${(caution / ings.length) * 100}%` }} />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground w-6 text-right">{caution}</span>
+                                </div>
+                                {avoid > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <X className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                                    <div className="flex-1 bg-secondary/40 rounded-full h-2">
+                                      <div className="bg-red-400 h-2 rounded-full" style={{ width: `${(avoid / ings.length) * 100}%` }} />
+                                    </div>
+                                    <span className="text-xs text-muted-foreground w-6 text-right">{avoid}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* No ingredients message */}
+                  {!bothHaveIngredients && (
+                    <div className="rounded-2xl border border-border bg-secondary/20 p-6 text-center">
+                      <FlaskConical className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground">Ingredient data not available</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        One or both products don't have ingredient lists in our database yet. Price and category comparison is shown above.
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground text-center pt-2">
+                    Comparison is for informational purposes only. Ingredient positions may not reflect exact concentrations.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </section>
 
