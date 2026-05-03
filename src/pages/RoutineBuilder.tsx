@@ -197,14 +197,14 @@ function SlotCard({
   const colorClass = STEP_COLORS[slot.step] ?? STEP_COLORS.Other;
   const [showDupes, setShowDupes] = useState(false);
 
-  const { data: dupes, isFetching: dupesFetching } = useQuery<DupeResult[]>({
+  const { data: dupes, isFetching: dupesFetching } = useQuery({
     queryKey: ["slot-dupes", slot.productId],
-    queryFn: () => api.get<DupeResult[]>(`/dupes/by-product/${slot.productId}`),
+    queryFn: () => api.get<{ role: string; dupes: DupeResult[] }>(`/dupes/by-product/${slot.productId}`),
     enabled: showDupes,
     staleTime: 60_000,
   });
 
-  const topDupes = (dupes ?? []).slice(0, 3);
+  const topDupes = (dupes?.dupes ?? []).slice(0, 3);
 
   return (
     <motion.div
