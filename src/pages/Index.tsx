@@ -4,7 +4,6 @@ import HowItWorks from "@/components/home/HowItWorks";
 import CategoryNav from "@/components/home/CategoryNav";
 import FeaturedDupes from "@/components/home/FeaturedDupes";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
-import TrendingSection from "@/components/home/TrendingSection";
 import StartHere from "@/components/home/StartHere";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
@@ -37,7 +36,6 @@ const Index = () => {
         <CategoryNav />
         <FeaturedProducts />
         <FeaturedDupes />
-        <TrendingSection />
       </main>
       <Footer />
     </div>
