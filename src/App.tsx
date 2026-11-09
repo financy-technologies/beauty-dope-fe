@@ -34,6 +34,11 @@ import Community from "./pages/Community";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import ProductDetail from "./pages/ProductDetail";
+import GoRedirect from "./pages/GoRedirect";
+import Newsletter from "./pages/Newsletter";
+import SignupAttribution from "./pages/admin/SignupAttribution";
+import AttributionTracker from "./components/AttributionTracker";
+import HeardAboutPrompt from "./components/HeardAboutPrompt";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +53,8 @@ const App = () => (
         <BrowserRouter>
         <SignInModalProvider>
           <ScrollToTop />
+          <AttributionTracker />
+          <HeardAboutPrompt />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />
@@ -77,7 +84,10 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/newsletter" element={<Newsletter />} />
             <Route path="/search" element={<Browse />} />
+            <Route path="/go/:slug" element={<GoRedirect />} />
+            <Route path="/admin/attribution" element={<SignupAttribution />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </SignInModalProvider>

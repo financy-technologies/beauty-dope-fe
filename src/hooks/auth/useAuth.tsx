@@ -1,10 +1,13 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { api, setToken, clearToken, getToken } from '@/integrations/api/client';
+import { getAttributionPayload, clearAttribution } from '@/lib/attribution';
+import { markHeardAboutPending } from '@/lib/heardAbout';
 
 interface ApiUser {
   id: string;
   email: string;
   displayName: string | null;
+  isAdmin?: boolean;
   profile?: {
     username: string | null;
     displayName: string | null;
@@ -17,6 +20,13 @@ interface ApiUser {
     points: number;
     pointsEarnedTotal: number;
   } | null;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  user: ApiUser;
+  /** True when this request created the account. */
+  isNewUser?: boolean;
 }
 
 interface AuthContextType {
@@ -46,26 +56,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { accessToken, user: u } = await api.post<{ accessToken: string; user: ApiUser }>(
+    const { accessToken, user: u } = await api.post<AuthResponse>(
       '/auth/login', { email, password }
     );
+    clearAttribution();
     setToken(accessToken);
     setUser(u);
   };
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const { accessToken, user: u } = await api.post<{ accessToken: string; user: ApiUser }>(
-      '/auth/register', { email, password, displayName }
+    const { accessToken, user: u } = await api.post<AuthResponse>(
+      '/auth/register', { email, password, displayName, attribution: getAttributionPayload() }
     );
+    clearAttribution();
+    markHeardAboutPending(u.id);
     setToken(accessToken);
     setUser(u);
   };
 
-  // credential = Google ID token (JWT) from @react-oauth/google
+  // credential = Google ID token (JWT) from @react-oauth/google.
+  // Attribution is only stored by the backend if this creates a new account.
   const signInWithGoogle = async (credential: string) => {
-    const { accessToken, user: u } = await api.post<{ accessToken: string; user: ApiUser }>(
-      '/auth/google', { credential }
+    const { accessToken, user: u, isNewUser } = await api.post<AuthResponse>(
+      '/auth/google', { credential, attribution: getAttributionPayload() }
     );
+    clearAttribution();
+    if (isNewUser) markHeardAboutPending(u.id);
     setToken(accessToken);
     setUser(u);
   };

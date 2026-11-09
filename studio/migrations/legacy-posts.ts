@@ -1,3 +1,7 @@
+// The blog posts that used to be hard-coded in beauty-dope-fe/src/data/blogPosts.ts.
+// Kept only as the source for migrations/import-legacy-posts.ts; the site now
+// reads posts from Sanity. Safe to delete once the import has been run.
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -424,7 +428,3 @@ export const BLOG_POSTS: BlogPost[] = [
     ],
   },
 ];
-
-export function getBlogPost(slug: string): BlogPost | undefined {
-  return BLOG_POSTS.find((p) => p.slug === slug);
-}

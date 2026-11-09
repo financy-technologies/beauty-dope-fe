@@ -4,10 +4,15 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-import { BookOpen, Clock, ChevronRight, Search, Mail, CheckCircle2 } from "lucide-react";
+import { BookOpen, Clock, ChevronRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { BLOG_POSTS } from "@/data/blogPosts";
+import { useBlogPosts } from "@/hooks/api/useBlog";
+import { formatPostDate, readingTimeLabel, sanityImageUrl, tagClasses, type BlogPostCard } from "@/lib/blog";
+import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
+import LatestIssues from "@/components/newsletter/LatestIssues";
+import { useNewsletter } from "@/hooks/api/useNewsletter";
 
 const BLOG_JSON_LD = {
   "@context": "https://schema.org",
@@ -22,52 +27,37 @@ const BLOG_JSON_LD = {
   },
 };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+/** Cover image from Sanity, or the emoji fallback. */
+function Cover({ post, className, emojiClass, width }: { post: BlogPostCard; className: string; emojiClass: string; width: number }) {
+  if (post.coverImage) {
+    return (
+      <div className={`${className} overflow-hidden bg-muted`}>
+        <img
+          src={sanityImageUrl(post.coverImage.url, width)}
+          alt={post.coverImage.alt}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+  return <div className={`${className} flex items-center justify-center ${emojiClass}`}>{post.coverEmoji ?? "🧴"}</div>;
 }
 
-function NewsletterSignup() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) setSubmitted(true);
-  };
-
+function LatestIssuesSection() {
+  const { data } = useNewsletter();
+  if (!data?.enabled || data.posts.length === 0) return null;
   return (
-    <section className="py-12 bg-gradient-to-br from-secondary to-primary/5">
-      <div className="container px-4 md:px-6 text-center">
-        <div className="mx-auto max-w-md">
-          <Mail className="mx-auto h-8 w-8 text-primary mb-3" />
-          <h2 className="font-display text-2xl font-semibold mb-2">Stay ingredient-literate</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            New guides every week. No sponsored content. Science first.
-          </p>
-          {submitted ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-2.5 text-sm font-semibold text-primary"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              You're in! We'll send you the good stuff.
-            </motion.div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex gap-2 max-w-sm mx-auto">
-              <Input
-                type="email"
-                required
-                placeholder="you@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/80 backdrop-blur flex-1"
-              />
-              <Button type="submit" className="rounded-full px-5 font-semibold shrink-0">
-                Subscribe
-              </Button>
-            </form>
-          )}
+    <section className="py-12 border-t border-border">
+      <div className="container px-4 md:px-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <h2 className="font-display text-2xl font-semibold">From the newsletter</h2>
+            <Link to="/newsletter" className="text-sm font-medium text-primary hover:underline underline-offset-2">
+              All issues
+            </Link>
+          </div>
+          <LatestIssues limit={3} />
         </div>
       </div>
     </section>
@@ -76,12 +66,14 @@ function NewsletterSignup() {
 
 const Blog = () => {
   const [query, setQuery] = useState("");
+  const { data: posts = [], isLoading, isError, refetch } = useBlogPosts();
 
-  const filtered = BLOG_POSTS.filter((p) =>
+  const q = query.toLowerCase();
+  const filtered = posts.filter((p) =>
     query.length < 2 ||
-    p.title.toLowerCase().includes(query.toLowerCase()) ||
-    p.tag.toLowerCase().includes(query.toLowerCase()) ||
-    p.excerpt.toLowerCase().includes(query.toLowerCase())
+    p.title.toLowerCase().includes(q) ||
+    (p.tag ?? "").toLowerCase().includes(q) ||
+    p.excerpt.toLowerCase().includes(q)
   );
 
   return (
@@ -135,7 +127,24 @@ const Blog = () => {
         <section className="py-12 md:py-16">
           <div className="container px-4 md:px-6">
             <div className="mx-auto max-w-5xl">
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <div className="space-y-6">
+                  <Skeleton className="h-56 w-full rounded-2xl" />
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1, 2].map((i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
+                  </div>
+                </div>
+              ) : isError ? (
+                <div className="py-20 text-center text-muted-foreground">
+                  <p className="font-medium">Couldn't load articles right now.</p>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>Try again</Button>
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="py-20 text-center text-muted-foreground">
+                  <p className="font-medium">No articles yet.</p>
+                  <p className="text-sm mt-1">Check back soon.</p>
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="py-20 text-center text-muted-foreground">
                   <p className="font-medium">No articles found for "{query}"</p>
                   <p className="text-sm mt-1">Try a different keyword.</p>
@@ -152,19 +161,24 @@ const Blog = () => {
                     <Link to={`/blog/${filtered[0].slug}`} className="group block rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors">
                       <div className="flex flex-col md:flex-row">
                         {/* Cover */}
-                        <div className="flex items-center justify-center bg-gradient-to-br from-secondary to-primary/10 text-6xl md:w-64 h-40 md:h-auto flex-shrink-0">
-                          {filtered[0].coverEmoji}
-                        </div>
+                        <Cover
+                          post={filtered[0]}
+                          width={600}
+                          className="md:w-64 h-40 md:h-auto flex-shrink-0"
+                          emojiClass="bg-gradient-to-br from-secondary to-primary/10 text-6xl"
+                        />
                         {/* Content */}
                         <div className="p-6 flex flex-col justify-center">
                           <div className="flex items-center gap-2 mb-3 flex-wrap">
-                            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${filtered[0].tagColor}`}>
-                              {filtered[0].tag}
-                            </span>
+                            {filtered[0].tag && (
+                              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${tagClasses(filtered[0].tagColor)}`}>
+                                {filtered[0].tag}
+                              </span>
+                            )}
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" /> {filtered[0].readingTime}
+                              <Clock className="h-3 w-3" /> {readingTimeLabel(filtered[0].readingTimeMinutes)}
                             </span>
-                            <span className="text-xs text-muted-foreground">{formatDate(filtered[0].publishedAt)}</span>
+                            <span className="text-xs text-muted-foreground">{formatPostDate(filtered[0].publishedAt)}</span>
                           </div>
                           <h2 className="font-display text-2xl font-bold tracking-tight group-hover:text-primary transition-colors mb-2">
                             {filtered[0].title}
@@ -192,16 +206,21 @@ const Blog = () => {
                         >
                           <Link to={`/blog/${post.slug}`} className="group block rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors h-full">
                             {/* Cover */}
-                            <div className="flex items-center justify-center bg-gradient-to-br from-secondary/60 to-primary/10 text-4xl h-28">
-                              {post.coverEmoji}
-                            </div>
+                            <Cover
+                              post={post}
+                              width={600}
+                              className="h-28"
+                              emojiClass="bg-gradient-to-br from-secondary/60 to-primary/10 text-4xl"
+                            />
                             <div className="p-5">
                               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${post.tagColor}`}>
-                                  {post.tag}
-                                </span>
+                                {post.tag && (
+                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${tagClasses(post.tagColor)}`}>
+                                    {post.tag}
+                                  </span>
+                                )}
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-3 w-3" /> {post.readingTime}
+                                  <Clock className="h-3 w-3" /> {readingTimeLabel(post.readingTimeMinutes)}
                                 </span>
                               </div>
                               <h2 className="font-display text-lg font-bold tracking-tight group-hover:text-primary transition-colors mb-1.5 line-clamp-2">
@@ -210,7 +229,7 @@ const Blog = () => {
                               <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                                 {post.excerpt}
                               </p>
-                              <p className="mt-3 text-xs text-muted-foreground">{formatDate(post.publishedAt)}</p>
+                              <p className="mt-3 text-xs text-muted-foreground">{formatPostDate(post.publishedAt)}</p>
                             </div>
                           </Link>
                         </motion.article>
@@ -223,7 +242,10 @@ const Blog = () => {
           </div>
         </section>
 
-        {/* Newsletter CTA */}
+        {/* Latest Substack issues */}
+        <LatestIssuesSection />
+
+        {/* Newsletter signup (Substack) */}
         <NewsletterSignup />
 
       </main>

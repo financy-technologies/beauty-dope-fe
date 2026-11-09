@@ -6,6 +6,8 @@ Disallow: /login
 Disallow: /signup
 Disallow: /favorites
 Disallow: /profile
+Disallow: /go/
+Disallow: /admin/
 
 # Block query-param variants so crawl budget isn't wasted on filter combinations
 Disallow: /*?*sort=

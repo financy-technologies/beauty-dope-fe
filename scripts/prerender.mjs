@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { createServer } from "node:net";
+import { createServer, connect } from "node:net";
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -8,6 +8,63 @@ import { JSDOM } from "jsdom";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "../dist");
+const SITE = "https://skinevora.com";
+
+/** VITE_API_URL from the environment, else .env.production / .env (same precedence as `vite build`). */
+async function apiUrl() {
+  if (process.env.VITE_API_URL) return process.env.VITE_API_URL;
+  for (const file of [".env.production", ".env"]) {
+    try {
+      const text = await fs.readFile(path.join(__dirname, "..", file), "utf-8");
+      const m = text.match(/^\s*VITE_API_URL\s*=\s*"?([^"\n#]+)"?/m);
+      if (m) return m[1].trim();
+    } catch {
+      /* file missing */
+    }
+  }
+  return null;
+}
+
+/** Published posts from the API (Sanity), so new posts get prerendered + into the sitemap. */
+async function loadBlogPosts() {
+  const base = await apiUrl();
+  if (!base) {
+    console.warn("⚠ VITE_API_URL not set — skipping blog post pages");
+    return [];
+  }
+  try {
+    const res = await fetch(`${base.replace(/\/$/, "")}/blog/posts`, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const posts = await res.json();
+    const valid = posts.filter((p) => typeof p.slug === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug));
+    console.log(`Found ${valid.length} blog post(s) in Sanity`);
+    return valid;
+  } catch (err) {
+    console.warn(`⚠ Couldn't load blog posts from ${base}: ${err.message} — skipping blog post pages`);
+    return [];
+  }
+}
+
+/** Replace the blog-post block of dist/sitemap.xml with the current posts. */
+async function writeBlogSitemap(posts) {
+  if (!posts.length) return; // keep whatever the static sitemap has
+  const file = path.join(distDir, "sitemap.xml");
+  const xml = await fs.readFile(file, "utf-8");
+  const start = xml.indexOf("<!-- Blog posts -->");
+  const end = xml.indexOf("<!--", start + 1);
+  if (start === -1 || end === -1) {
+    console.warn("⚠ sitemap.xml has no <!-- Blog posts --> section — not updated");
+    return;
+  }
+  const entries = posts
+    .map((p) => {
+      const lastmod = (p.updatedAt || p.publishedAt || "").slice(0, 10);
+      return `  <url>\n    <loc>${SITE}/blog/${p.slug}</loc>\n${lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : ""}    <changefreq>monthly</changefreq>\n    <priority>0.75</priority>\n  </url>\n`;
+    })
+    .join("\n");
+  await fs.writeFile(file, `${xml.slice(0, start)}<!-- Blog posts -->\n${entries}\n  ${xml.slice(end)}`, "utf-8");
+  console.log(`Updated sitemap.xml with ${posts.length} blog post(s)`);
+}
 
 const routes = [
   "/",
@@ -25,9 +82,8 @@ const routes = [
   "/methodology",
   "/community",
   "/blog",
-  "/blog/niacinamide-complete-guide",
-  "/blog/retinoid-beginners-guide",
-  "/blog/routine-for-sensitive-skin",
+  // Individual posts come from Sanity — see loadBlogPosts() below.
+  "/newsletter",
   "/contact",
   "/privacy",
   "/terms",
@@ -77,21 +133,56 @@ function getFreePort() {
   });
 }
 
-async function startServer(port) {
-  const server = spawn(
-    "node",
-    ["node_modules/.bin/serve", "dist", "-p", port, "--no-clipboard", "--single"],
-    { stdio: "ignore" }
-  );
-  // Give server a moment to start
-  await new Promise((r) => setTimeout(r, 1500));
-  return server;
+function waitForPort(port, timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs;
+  return new Promise((resolve, reject) => {
+    const attempt = () => {
+      const sock = connect(port, "localhost");
+      sock.once("connect", () => {
+        sock.destroy();
+        resolve();
+      });
+      sock.once("error", () => {
+        sock.destroy();
+        if (Date.now() > deadline) reject(new Error("not accepting connections"));
+        else setTimeout(attempt, 150);
+      });
+    };
+    attempt();
+  });
+}
+
+// Wait until the preview server really accepts connections. --no-port-switching
+// stops `serve` from silently moving to another port if ours got taken in the
+// meantime (which would make every page below a browser error page).
+async function startServer() {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const port = await getFreePort();
+    const server = spawn(
+      "node",
+      ["node_modules/.bin/serve", "dist", "-p", String(port), "--no-clipboard", "--single", "--no-port-switching"],
+      { stdio: "ignore" }
+    );
+    const exited = new Promise((_, reject) => server.once("exit", (code) => reject(new Error(`exited with code ${code}`))));
+    try {
+      await Promise.race([waitForPort(port), exited]);
+      return { server, port };
+    } catch (err) {
+      server.kill();
+      console.warn(`  ⚠ Preview server on port ${port} ${err.message}${attempt < 3 ? " — retrying" : ""}`);
+    }
+  }
+  throw new Error("Could not start the preview server");
 }
 
 async function prerender() {
-  const port = await getFreePort();
-  console.log(`Starting preview server on port ${port}...`);
-  const server = await startServer(port);
+  const posts = await loadBlogPosts();
+  routes.push(...posts.map((p) => `/blog/${p.slug}`));
+  await writeBlogSitemap(posts);
+
+  const { server, port } = await startServer();
+  console.log(`Preview server ready on port ${port}`);
+  const skipped = [];
 
   const browser = await puppeteer.launch({
     headless: "new",
@@ -117,8 +208,24 @@ async function prerender() {
       // Wait for React to fully render
       await new Promise((r) => setTimeout(r, 1000));
 
-      const html = await page.content();
-      await page.close();
+      // Never save a browser error page or an empty app as the page's HTML —
+      // leaving it un-prerendered (plain SPA) is far better for SEO. One bad
+      // route (e.g. a detached frame after a timeout) must not stop the rest.
+      let html = null;
+      try {
+        const rendered = await page.evaluate(
+          () => !document.getElementById("main-frame-error") && (document.getElementById("root")?.childElementCount ?? 0) > 0
+        );
+        if (rendered) html = await page.content();
+      } catch (err) {
+        console.warn(`  ⚠ ${route}: ${err.message.split("\n")[0]}`);
+      }
+      await page.close().catch(() => {});
+      if (!html) {
+        console.warn(`  ⚠ ${route} didn't render — not saved`);
+        skipped.push(route);
+        continue;
+      }
 
       const cleanedHtml = dedupeHelmetTags(html);
 
@@ -137,6 +244,9 @@ async function prerender() {
     server.kill();
   }
 
+  if (skipped.length) {
+    console.warn(`\n⚠ ${skipped.length} route(s) were not prerendered and will be served as the plain app: ${skipped.join(", ")}`);
+  }
   console.log("\nPrerendering complete!");
 }
 

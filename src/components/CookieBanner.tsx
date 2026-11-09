@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const COOKIE_KEY = "skinevora_cookie_consent";
+import { CONSENT_KEY as COOKIE_KEY } from "@/lib/consent";
+import { clearAttribution } from "@/lib/attribution";
 
 const CookieBanner = () => {
   const [visible, setVisible] = useState(false);
@@ -22,6 +22,7 @@ const CookieBanner = () => {
 
   const decline = () => {
     localStorage.setItem(COOKIE_KEY, "declined");
+    clearAttribution();
     setVisible(false);
   };
 

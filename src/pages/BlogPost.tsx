@@ -3,174 +3,56 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-import { Clock, ArrowLeft, ChevronRight, AlertTriangle, Lightbulb, Check, ShoppingBag } from "lucide-react";
-import { getBlogPost, BLOG_POSTS, type BlogSection, type IngredientItem, type ProductPick } from "@/data/blogPosts";
+import { Clock, ArrowLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import PortableBody from "@/components/blog/PortableBody";
+import { useBlogPost } from "@/hooks/api/useBlog";
+import { formatPostDate, readingTimeLabel, sanityImageUrl, tagClasses } from "@/lib/blog";
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-}
-
-/* ── Ingredient card ─────────────────────────────────────────────────────── */
-function IngredientCard({ item }: { item: IngredientItem }) {
-  const showInci = item.inci.toLowerCase() !== item.name.toLowerCase() && !item.name.toLowerCase().startsWith(item.inci.toLowerCase());
-  return (
-    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 my-1">
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-        <div>
-          <h4 className="font-semibold text-foreground">{item.name}</h4>
-          {showInci && <p className="text-xs text-muted-foreground font-mono">{item.inci}</p>}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {item.skinTypes.map((st) => (
-            <span key={st} className="text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground font-medium">
-              {st}
-            </span>
-          ))}
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">{item.benefit}</p>
-      {item.caution && (
-        <p className="mt-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 flex items-start gap-2">
-          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-          {item.caution}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ── Section renderer ────────────────────────────────────────────────────── */
-function RenderSection({ section, index }: { section: BlogSection; index: number }) {
-  switch (section.type) {
-    case "paragraph":
-      return (
-        <p className="text-muted-foreground leading-7 mb-4">
-          {section.text}
-        </p>
-      );
-
-    case "heading":
-      return (
-        <h2 className="font-display text-2xl font-bold tracking-tight text-foreground mt-10 mb-4 pb-2 border-b border-border">
-          {section.text}
-        </h2>
-      );
-
-    case "subheading":
-      return (
-        <h3 className="font-semibold text-lg text-foreground mt-6 mb-2">
-          {section.text}
-        </h3>
-      );
-
-    case "ingredient-card":
-      return (
-        <div className="my-6 space-y-3">
-          {section.items?.map((item) => <IngredientCard key={item.inci} item={item} />)}
-        </div>
-      );
-
-    case "ingredient-list":
-      return (
-        <div className="my-6 grid gap-3 sm:grid-cols-2">
-          {section.items?.map((item) => <IngredientCard key={item.inci} item={item} />)}
-        </div>
-      );
-
-    case "tip-box":
-      return (
-        <div className="my-6 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 flex gap-3">
-          <Lightbulb className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-foreground leading-relaxed">{section.text}</p>
-        </div>
-      );
-
-    case "warning-box":
-      return (
-        <div className="my-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex gap-3">
-          <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-800 leading-relaxed">{section.text}</p>
-        </div>
-      );
-
-    case "table":
-      return (
-        <div className="my-6 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/60">
-                {section.headers?.map((h) => (
-                  <th key={h} className="text-left px-4 py-3 font-semibold text-foreground border-b border-border">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {section.rows?.map((row, ri) => (
-                <tr key={ri} className={ri % 2 === 0 ? "bg-card" : "bg-muted/30"}>
-                  {row.map((cell, ci) => (
-                    <td key={ci} className="px-4 py-3 text-muted-foreground border-b border-border/50 last:border-b-0">
-                      {cell}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-
-    case "product-picks":
-      return (
-        <div className="my-6 grid gap-3 sm:grid-cols-2">
-          {section.products?.map((product) => (
-            <div key={`${product.brand}-${product.name}`} className="rounded-xl border border-accent/20 bg-accent/5 p-4">
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-accent">{product.brand}</p>
-                  <h4 className="font-semibold text-foreground text-sm leading-snug">{product.name}</h4>
-                </div>
-                <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-bold text-accent">
-                  {product.price}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{product.why}</p>
-            </div>
-          ))}
-        </div>
-      );
-
-    case "checklist":
-      return (
-        <div className="my-6 space-y-2">
-          {section.checkItems?.map((item) => (
-            <div key={item.label} className="flex gap-3 rounded-lg border border-border bg-card px-4 py-3">
-              <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-foreground">{item.label}</span>
-                <span className="text-sm text-muted-foreground"> — {item.note}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-
-    default:
-      return null;
-  }
-}
-
-/* ── Page ────────────────────────────────────────────────────────────────── */
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const post = getBlogPost(slug ?? "");
+  const { data: post, isLoading, isError, notFound, refetch } = useBlogPost(slug);
 
-  if (!post) return <Navigate to="/blog" replace />;
+  if (notFound) return <Navigate to="/blog" replace />;
 
-  const relatedPosts = BLOG_POSTS.filter(
-    (p) => p.slug !== post.slug && (post.relatedSlugs?.includes(p.slug) ?? false)
-  );
+  if (isLoading || isError || !post) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <section className="bg-gradient-hero py-12 md:py-16">
+            <div className="container px-4 md:px-6">
+              <div className="mx-auto max-w-3xl space-y-4">
+                {isError ? (
+                  <div className="py-10 text-center text-muted-foreground">
+                    <p className="font-medium">Couldn't load this article right now.</p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>Try again</Button>
+                  </div>
+                ) : (
+                  <>
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-6 w-3/4" />
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+          {!isError && (
+            <section className="py-10">
+              <div className="container px-4 md:px-6">
+                <div className="mx-auto max-w-3xl space-y-3">
+                  {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-4 w-full" />)}
+                </div>
+              </div>
+            </section>
+          )}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -183,8 +65,9 @@ const BlogPost = () => {
       "name": "Skinevora",
       "logo": { "@type": "ImageObject", "url": "https://skinevora.com/favicon.png" },
     },
+    ...(post.coverImage ? { "image": sanityImageUrl(post.coverImage.url, 1200) } : {}),
     "datePublished": post.publishedAt,
-    "dateModified": post.publishedAt,
+    "dateModified": post.updatedAt,
     "url": `https://skinevora.com/blog/${post.slug}`,
     "mainEntityOfPage": { "@type": "WebPage", "@id": `https://skinevora.com/blog/${post.slug}` },
   };
@@ -196,6 +79,7 @@ const BlogPost = () => {
         description={post.excerpt}
         canonical={`/blog/${post.slug}`}
         ogType="article"
+        ogImage={post.coverImage ? sanityImageUrl(post.coverImage.url, 1200) : undefined}
         jsonLd={articleJsonLd}
       />
       <Header />
@@ -221,13 +105,15 @@ const BlogPost = () => {
 
               {/* Tag + meta */}
               <div className="flex items-center gap-3 mb-4 flex-wrap">
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${post.tagColor}`}>
-                  {post.tag}
-                </span>
+                {post.tag && (
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${tagClasses(post.tagColor)}`}>
+                    {post.tag}
+                  </span>
+                )}
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> {post.readingTime}
+                  <Clock className="h-3 w-3" /> {readingTimeLabel(post.readingTimeMinutes)}
                 </span>
-                <span className="text-xs text-muted-foreground">{formatDate(post.publishedAt)}</span>
+                <span className="text-xs text-muted-foreground">{formatPostDate(post.publishedAt)}</span>
               </div>
 
               <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-4 leading-tight">
@@ -245,14 +131,21 @@ const BlogPost = () => {
         <section className="py-10 md:py-14">
           <div className="container px-4 md:px-6">
             <div className="mx-auto max-w-3xl">
+              {post.coverImage && (
+                <img
+                  src={sanityImageUrl(post.coverImage.url, 1200)}
+                  alt={post.coverImage.alt}
+                  width={post.coverImage.width ?? undefined}
+                  height={post.coverImage.height ?? undefined}
+                  className="mb-10 w-full h-auto rounded-2xl border border-border bg-muted"
+                />
+              )}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                {post.content.map((section, i) => (
-                  <RenderSection key={i} section={section} index={i} />
-                ))}
+                <PortableBody value={post.body} />
               </motion.div>
 
               {/* Back + browse dupes CTA */}
@@ -265,7 +158,8 @@ const BlogPost = () => {
                   Back to all articles
                 </Link>
                 <Link
-                  to="/browse"
+                  to={`/go/blog?utm_content=${encodeURIComponent(post.slug)}`}
+                  rel="nofollow"
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Browse ingredient-matched dupes
@@ -277,28 +171,30 @@ const BlogPost = () => {
         </section>
 
         {/* Related articles */}
-        {relatedPosts.length > 0 && (
+        {post.related.length > 0 && (
           <section className="py-10 bg-muted/30">
             <div className="container px-4 md:px-6">
               <div className="mx-auto max-w-3xl">
                 <h2 className="font-display text-xl font-semibold mb-6">Related Articles</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {relatedPosts.map((rp) => (
+                  {post.related.map((rp) => (
                     <Link
                       key={rp.slug}
                       to={`/blog/${rp.slug}`}
                       className="group flex gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors"
                     >
-                      <span className="text-2xl flex-shrink-0 mt-0.5">{rp.coverEmoji}</span>
+                      <span className="text-2xl flex-shrink-0 mt-0.5">{rp.coverEmoji ?? "🧴"}</span>
                       <div>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${rp.tagColor}`}>
-                          {rp.tag}
-                        </span>
+                        {rp.tag && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${tagClasses(rp.tagColor)}`}>
+                            {rp.tag}
+                          </span>
+                        )}
                         <h3 className="mt-1.5 text-sm font-semibold group-hover:text-primary transition-colors line-clamp-2">
                           {rp.title}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {rp.readingTime}
+                          <Clock className="h-3 w-3" /> {readingTimeLabel(rp.readingTimeMinutes)}
                         </p>
                       </div>
                     </Link>

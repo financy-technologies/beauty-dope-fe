@@ -26,6 +26,7 @@ const Footer = () => {
       { name: "Methodology", href: "/methodology" },
       { name: "Community", href: "/community" },
       { name: "Blog", href: "/blog" },
+      { name: "Newsletter", href: "/newsletter" },
       { name: "Contact", href: "/contact" },
       { name: "Privacy Policy", href: "/privacy" },
       { name: "Terms of Service", href: "/terms" },

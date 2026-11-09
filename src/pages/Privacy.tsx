@@ -5,7 +5,7 @@ import SEO from "@/components/SEO";
 const SECTIONS = [
   {
     title: "Information We Collect",
-    content: `We collect information you provide directly, such as when you create an account (email address, display name), submit reviews, or save favourites. We also collect usage data automatically — pages visited, search queries entered, and device/browser information — to improve the service.`,
+    content: `We collect information you provide directly, such as when you create an account (email address, display name), submit reviews, or save favourites. We also collect usage data automatically — pages visited, search queries entered, device/browser information, and how you found us (for example the link or website that referred you) — to improve the service. If you decline cookies, we don't record how you found us.`,
   },
   {
     title: "How We Use Your Information",

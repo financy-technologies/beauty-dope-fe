@@ -94,6 +94,13 @@
     <priority>0.85</priority>
   </url>
 
+  <url>
+    <loc>https://skinevora.com/newsletter</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Blog posts -->
   <url>
     <loc>https://skinevora.com/blog/niacinamide-complete-guide</loc>
