@@ -3,7 +3,8 @@ import {projectId, dataset} from './env'
 
 export default defineCliConfig({
   api: {projectId, dataset},
-  // `npm run deploy` asks for a hostname the first time (e.g. skinevora → skinevora.sanity.studio).
+  // `npm run deploy` publishes to https://skinevora.sanity.studio
+  studioHost: 'skinevora',
   // Auto-updates off so the deployed Studio runs exactly the pinned version.
-  deployment: {autoUpdates: false},
+  deployment: {appId: 'o2iq1z0sar54yrao52zz8i39', autoUpdates: false},
 })
