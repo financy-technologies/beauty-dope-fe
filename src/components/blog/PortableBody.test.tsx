@@ -92,7 +92,7 @@ describe("blog helpers", () => {
     expect(safeHref("/dupes")).toEqual({ href: "/dupes", internal: true });
     expect(safeHref("https://skinevora.com/blog/x?y=1")).toEqual({ href: "/blog/x?y=1", internal: true });
     expect(safeHref("https://example.com/a")).toEqual({ href: "https://example.com/a", internal: false });
-    expect(safeHref("mailto:hello@skinevora.com")?.internal).toBe(false);
+    expect(safeHref("mailto:support@skinevora.com")?.internal).toBe(false);
     for (const bad of ["javascript:alert(1)", "data:text/html,x", "//evil.com", "", null, 42]) expect(safeHref(bad)).toBeNull();
   });
 

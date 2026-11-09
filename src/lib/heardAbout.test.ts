@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   HEARD_ABOUT_OPTIONS,
   clearHeardAboutPending,
-  heardAboutLabel,
   isHeardAboutPending,
   markHeardAboutPending,
 } from "./heardAbout";
@@ -28,10 +27,5 @@ describe("options", () => {
     const values = HEARD_ABOUT_OPTIONS.map((o) => o.value);
     expect(new Set(values).size).toBe(values.length);
     expect(values[values.length - 1]).toBe("other");
-  });
-
-  it("label known values and pass unknown ones through", () => {
-    expect(heardAboutLabel("ai_assistant")).toBe("ChatGPT / AI assistant");
-    expect(heardAboutLabel("carrier-pigeon")).toBe("carrier-pigeon");
   });
 });

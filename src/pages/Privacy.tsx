@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
+import { SUPPORT_EMAIL } from "@/config/contact";
 
 const SECTIONS = [
   {
@@ -21,7 +22,7 @@ const SECTIONS = [
   },
   {
     title: "Data Retention",
-    content: `We retain your account information for as long as your account is active. You can request deletion of your account and associated data at any time by contacting hello@skinevora.com.`,
+    content: `We retain your account information for as long as your account is active. You can request deletion of your account and associated data at any time by contacting ${SUPPORT_EMAIL}.`,
   },
   {
     title: "Security",
@@ -37,7 +38,7 @@ const SECTIONS = [
   },
   {
     title: "Contact Us",
-    content: `If you have questions about this Privacy Policy, please contact us at hello@skinevora.com.`,
+    content: `If you have questions about this Privacy Policy, please contact us at ${SUPPORT_EMAIL}.`,
   },
 ];
 

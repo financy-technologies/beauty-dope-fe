@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles, Gift, Activity, Zap, BarChart3 } from "lucide-react";
+import { Search, User, Heart, Menu, X, LogOut, FlaskConical, ChevronDown, GitCompareArrows, Sparkles, Gift, Activity, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -271,14 +271,6 @@ const Header = () => {
                       Favorites
                     </Link>
                   </DropdownMenuItem>
-                  {user.isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/attribution" className="cursor-pointer">
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        Signup attribution
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />

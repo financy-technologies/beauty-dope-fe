@@ -7,7 +7,6 @@ interface ApiUser {
   id: string;
   email: string;
   displayName: string | null;
-  isAdmin?: boolean;
   profile?: {
     username: string | null;
     displayName: string | null;

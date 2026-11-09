@@ -17,9 +17,6 @@ export const HEARD_ABOUT_OPTIONS = [
 
 export type HeardAboutChannel = (typeof HEARD_ABOUT_OPTIONS)[number]["value"];
 
-export const heardAboutLabel = (value: string) =>
-  HEARD_ABOUT_OPTIONS.find((o) => o.value === value)?.label ?? value;
-
 // The question is "pending" from signup until it's answered or skipped. Keyed
 // by user id so it survives a reload but never shows for a different account.
 const PENDING_KEY = "skinevora_heard_about_pending";

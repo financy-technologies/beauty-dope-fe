@@ -1,19 +1,21 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Mail, MessageSquare, Twitter, Linkedin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
+import { SUPPORT_EMAIL, contactMailto } from "@/config/contact";
 
 const CHANNELS = [
   {
     icon: Mail,
     title: "Email",
     description: "For partnerships, press, or general enquiries.",
-    value: "hello@skinevora.com",
-    href: "mailto:hello@skinevora.com",
+    value: SUPPORT_EMAIL,
+    href: `mailto:${SUPPORT_EMAIL}`,
   },
   {
     icon: Twitter,
@@ -40,10 +42,21 @@ const CHANNELS = [
 
 const Contact = () => {
   const { toast } = useToast();
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const field = (key: keyof typeof form) => ({
+    value: form[key],
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((f) => ({ ...f, [key]: e.target.value })),
+  });
 
+  // There's no mail-sending backend, so hand the message to the visitor's own
+  // email app, addressed to support — nothing is silently dropped.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Message sent!", description: "We'll get back to you within 2 business days." });
+    window.location.href = contactMailto(form);
+    toast({
+      title: "Opening your email app…",
+      description: `Your message is ready to send. If nothing opens, email us at ${SUPPORT_EMAIL}.`,
+    });
   };
 
   return (
@@ -112,28 +125,33 @@ const Contact = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium">Name</label>
-                      <Input placeholder="Your name" required />
+                      <label htmlFor="contact-name" className="text-sm font-medium">Name</label>
+                      <Input id="contact-name" placeholder="Your name" required {...field("name")} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium">Email</label>
-                      <Input type="email" placeholder="you@example.com" required />
+                      <label htmlFor="contact-email" className="text-sm font-medium">Email</label>
+                      <Input id="contact-email" type="email" placeholder="you@example.com" required {...field("email")} />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Subject</label>
-                    <Input placeholder="What's this about?" required />
+                    <label htmlFor="contact-subject" className="text-sm font-medium">Subject</label>
+                    <Input id="contact-subject" placeholder="What's this about?" required {...field("subject")} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Message</label>
+                    <label htmlFor="contact-message" className="text-sm font-medium">Message</label>
                     <textarea
+                      id="contact-message"
                       required
+                      {...field("message")}
                       rows={5}
                       placeholder="Tell us more..."
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                     />
                   </div>
-                  <Button type="submit" className="w-full font-semibold">Send Message</Button>
+                  <Button type="submit" className="w-full font-semibold">Send via email</Button>
+                  <p className="text-center text-xs text-muted-foreground">
+                    Opens your email app with this message addressed to {SUPPORT_EMAIL}.
+                  </p>
                 </form>
               </div>
             </div>

@@ -21,6 +21,11 @@
         "source": "/product/compare",
         "destination": "/compare",
         "type": 301
+      },
+      {
+        "source": "/admin/**",
+        "destination": "https://admin.skinevora.com/attribution",
+        "type": 302
       }
     ],
     "headers": [

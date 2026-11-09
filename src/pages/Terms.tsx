@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEO from "@/components/SEO";
+import { SUPPORT_EMAIL } from "@/config/contact";
 
 const SECTIONS = [
   {
@@ -45,7 +46,7 @@ const SECTIONS = [
   },
   {
     title: "Contact",
-    content: `Questions about these Terms? Reach us at hello@skinevora.com.`,
+    content: `Questions about these Terms? Reach us at ${SUPPORT_EMAIL}.`,
   },
 ];
 
